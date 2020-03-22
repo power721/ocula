@@ -1,16 +1,15 @@
 package com.har01d.ocula.examples
 
-import com.github.kittinunf.fuel.httpPost
 import com.har01d.ocula.*
+import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.AbstractParser
-import java.net.HttpCookie
 
 
 fun main() {
     val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/").apply {
-        preHandlers += AuthHandler()
+        preHandlers += CsrfFormAuthHandler()
         listeners += LogListener
         resultHandlers += LogResultHandler
         resultHandlers += FileResultHandler("/tmp/quotes.json")
@@ -37,29 +36,18 @@ class QuotesParser : AbstractParser<List<Quote>>() {
     }
 }
 
-class AuthHandler : AbstractPreHandler() {
+class CsrfFormAuthHandler : AuthHandler() {
     override fun handle(request: Request) {
-        val res = spider.downloader.download(Request("http://quotes.toscrape.com/login"))
+        val url = "http://quotes.toscrape.com/login"
+        val res = spider.downloader.dispatch(Request(url))
         val token = res.select("input[name=csrf_token]").`val`()
-        val (req, response, result) = "http://quotes.toscrape.com/login"
-                .httpPost(
-                        listOf(
-                                "csrf_token" to token,
-                                "username" to "user",
-                                "password" to "password"
-                        )
-                )
-                .header("Cookie", res.cookies.joinToString("&"))
-                .header("Referer", "http://quotes.toscrape.com/login")
-                .responseString()
-        response.headers["Set-Cookie"]
-                ?.flatMap { HttpCookie.parse(it) }
-                .also { println(it) }
-                .find { it.name == "session" }
-                ?.let {
-                    request.headers["Cookie"] = listOf("session=" + it.value)
-                    println("login")
-                }
+        val formRequest = Request(url, HttpMethod.POST, listOf(
+                "csrf_token" to token,
+                "username" to "user",
+                "password" to "password"
+        ), cookies = res.cookies.toMutableList())
+        val response = spider.downloader.dispatch(formRequest)
+        request.cookies += response.cookies
     }
 }
 

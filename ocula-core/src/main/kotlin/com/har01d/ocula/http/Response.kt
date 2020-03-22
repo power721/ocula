@@ -10,8 +10,8 @@ data class Response(
         val body: String,
         val statusCode: Int = -1,
         val responseMessage: String = "",
-        val headers: MutableMap<String, Collection<String>> = mutableMapOf(),
-        val cookies: List<HttpCookie> = mutableListOf(),
+        val headers: Map<String, Collection<String>> = mapOf(),
+        val cookies: List<HttpCookie> = listOf(),
         val contentLength: Long = 0L
 ) {
     private val document: Document by lazy {

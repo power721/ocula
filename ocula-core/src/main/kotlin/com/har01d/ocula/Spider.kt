@@ -2,6 +2,7 @@ package com.har01d.ocula
 
 import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.Parser
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -16,6 +17,7 @@ class Spider<T>(private val parser: Parser<T>) {
     }
 
     private val requests = mutableListOf<Request>()
+    private var authHandler: AuthHandler? = null
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
@@ -33,6 +35,18 @@ class Spider<T>(private val parser: Parser<T>) {
 
     fun addUrl(url: String) {
         requests += Request(url)
+    }
+
+    fun basicAuth(username: String, password: String) {
+        authHandler = BasicAuthHandler(username, password)
+    }
+
+    fun tokenAuth(token: String, header: String = "Authorization") {
+        authHandler = TokenAuthHandler(token, header)
+    }
+
+    fun formAuth(actionUrl: String, parameters: Parameters, block: (request: Request, response: Response) -> Unit = sessionHandler) {
+        authHandler = FormAuthHandler(actionUrl, parameters, block)
     }
 
     fun finish() {
@@ -85,6 +99,9 @@ class Spider<T>(private val parser: Parser<T>) {
         if (resultHandlers.isEmpty()) {
             resultHandlers.add(LogResultHandler)
         }
+        authHandler?.let {
+            preHandlers += authHandler!!
+        }
     }
 
     private fun enqueue(queue: RequestQueue) {
@@ -126,7 +143,7 @@ class Spider<T>(private val parser: Parser<T>) {
             val request = queueCrawler.poll()
             try {
                 val response = try {
-                    downloader.download(request)
+                    downloader.dispatch(request)
                 } catch (e: Exception) {
                     listeners.forEach { it.onDownloadFailed(request, e) }
                     throw e
@@ -158,7 +175,7 @@ class Spider<T>(private val parser: Parser<T>) {
             val request = queueParser.poll()
             try {
                 val response = try {
-                    downloader.download(request)
+                    downloader.dispatch(request)
                 } catch (e: Exception) {
                     listeners.forEach { it.onDownloadFailed(request, e) }
                     throw e
