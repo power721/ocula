@@ -31,6 +31,7 @@ class Spider<T>(private val parser: Parser<T>) {
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener<T>>(StatisticListener)
     var httpClient: HttpClient = FuelHttpClient()
+    var dedupHandler: DedupHandler = HashSetDedupHandler
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = queueParser
     var crawler: Crawler? = null
@@ -152,6 +153,9 @@ class Spider<T>(private val parser: Parser<T>) {
         while (true) {
             val request = queueCrawler.poll()
             try {
+                if (!dedupHandler.handle(request)) {
+                    continue
+                }
                 val response = try {
                     dispatch(request)
                 } catch (e: Exception) {
@@ -184,6 +188,9 @@ class Spider<T>(private val parser: Parser<T>) {
         while (true) {
             val request = queueParser.poll()
             try {
+                if (!dedupHandler.handle(request)) {
+                    continue
+                }
                 val response = try {
                     dispatch(request)
                 } catch (e: Exception) {
