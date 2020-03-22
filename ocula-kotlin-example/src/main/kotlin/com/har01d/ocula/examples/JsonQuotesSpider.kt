@@ -1,6 +1,7 @@
 package com.har01d.ocula.examples
 
 import com.har01d.ocula.Spider
+import com.har01d.ocula.handler.JsonFileResultHandler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.AbstractParser
@@ -8,6 +9,7 @@ import com.jayway.jsonpath.TypeRef
 
 fun main() {
     val spider = Spider(JsonQuotesParser(), "http://quotes.toscrape.com/api/quotes")
+    spider.resultHandlers += JsonFileResultHandler("/tmp/quotes.json")
     spider.run()
 }
 

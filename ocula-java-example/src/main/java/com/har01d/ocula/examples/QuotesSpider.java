@@ -1,8 +1,8 @@
 package com.har01d.ocula.examples;
 
 import com.har01d.ocula.Spider;
-import com.har01d.ocula.handler.FileResultHandler;
 import com.har01d.ocula.handler.LogResultHandler;
+import com.har01d.ocula.handler.TextFileResultHandler;
 import com.har01d.ocula.http.Request;
 import com.har01d.ocula.http.Response;
 import com.har01d.ocula.listener.LogListener;
@@ -17,7 +17,7 @@ public class QuotesSpider {
         Spider spider = new Spider<List<Quote>>(new QuotesParser(), "http://quotes.toscrape.com/tag/humor/");
         spider.getListeners().add(LogListener.INSTANCE);
         spider.getResultHandlers().add(LogResultHandler.INSTANCE);
-        spider.getResultHandlers().add(new FileResultHandler("/tmp/quotes.json"));
+        spider.getResultHandlers().add(new TextFileResultHandler("/tmp/quotes.json"));
         spider.run();
     }
 }

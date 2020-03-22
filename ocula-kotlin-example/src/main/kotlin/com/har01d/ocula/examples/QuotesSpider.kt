@@ -2,9 +2,9 @@ package com.har01d.ocula.examples
 
 import com.har01d.ocula.Spider
 import com.har01d.ocula.handler.AuthHandler
-import com.har01d.ocula.handler.FileResultHandler
 import com.har01d.ocula.handler.HtmlResultHandler
 import com.har01d.ocula.handler.LogResultHandler
+import com.har01d.ocula.handler.TextFileResultHandler
 import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
@@ -17,7 +17,7 @@ fun main() {
         authHandler = CsrfFormAuthHandler()
         listeners += LogListener
         resultHandlers += LogResultHandler
-        resultHandlers += FileResultHandler("/tmp/quotes.json")
+        resultHandlers += TextFileResultHandler("/tmp/quotes.txt")
         resultHandlers += HtmlResultHandler("/tmp/quotes/humor")
     }
     spider.run()

@@ -1,5 +1,6 @@
 package com.har01d.ocula.handler
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.util.md5
@@ -19,9 +20,16 @@ object LogResultHandler : ResultHandler<Any?> {
     }
 }
 
-class FileResultHandler(private val file: String) : ResultHandler<Any?> {
+class TextFileResultHandler(private val file: String) : ResultHandler<Any?> {
     override fun handle(request: Request, response: Response, result: Any?) {
         BufferedWriter(FileWriter(file, true)).use { out -> out.write(Objects.toString(result)) }
+    }
+}
+
+class JsonFileResultHandler(private val file: String) : ResultHandler<Any?> {
+    private val mapper = jacksonObjectMapper()
+    override fun handle(request: Request, response: Response, result: Any?) {
+        BufferedWriter(FileWriter(file, true)).use { out -> out.write(mapper.writeValueAsString(result)) }
     }
 }
 
