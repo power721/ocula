@@ -1,6 +1,5 @@
 package com.har01d.ocula
 
-import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.http.FuelHttpClient
 import com.har01d.ocula.http.HttpClient
 import com.har01d.ocula.http.Request
