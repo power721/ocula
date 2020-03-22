@@ -1,0 +1,7 @@
+package com.har01d.ocula.http
+
+enum class HttpMethod {
+    GET,
+    POST,
+    PUT,
+}
