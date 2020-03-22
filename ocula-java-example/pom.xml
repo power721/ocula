@@ -11,9 +11,6 @@
     </parent>
 
     <artifactId>ocula-java-example</artifactId>
-    <version>0.1</version>
-
-    <name>ocula-java-example</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,7 +20,7 @@
         <dependency>
             <groupId>com.har01d</groupId>
             <artifactId>ocula-core</artifactId>
-            <version>0.1</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

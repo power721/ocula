@@ -29,12 +29,12 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 
-class Spider<T>(private val parser: Parser<T>) {
+open class Spider<T>(private val parser: Parser<T>) {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
     }
 
-    private val requests = mutableListOf<Request>()
+    val requests = mutableListOf<Request>()
     var userAgents: List<String> = defaultUserAgents
     var httpHeaders: List<Pair<String, Collection<String>>> = defaultHttpHeaders
     var authHandler: AuthHandler? = null
@@ -152,7 +152,7 @@ class Spider<T>(private val parser: Parser<T>) {
         }
     }
 
-    private fun preHandle() {
+    open fun preHandle() {
         requests.forEach { request ->
             preHandlers.forEach {
                 it.spider = this@Spider
@@ -166,7 +166,7 @@ class Spider<T>(private val parser: Parser<T>) {
         }
     }
 
-    private fun postHandle() {
+    open fun postHandle() {
         requests.forEach { request ->
             postHandlers.forEach {
                 it.spider = this@Spider

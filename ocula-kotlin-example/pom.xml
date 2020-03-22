@@ -11,22 +11,22 @@
     </parent>
 
     <artifactId>ocula-kotlin-example</artifactId>
-    <version>0.1</version>
-
-    <name>ocula-kotlin-example</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.3.61</kotlin.version>
-        <kotlin.code.style>official</kotlin.code.style>
-        <junit.version>4.12</junit.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.har01d</groupId>
             <artifactId>ocula-core</artifactId>
-            <version>0.1</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.har01d</groupId>
+            <artifactId>ocula-selenium</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

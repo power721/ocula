@@ -13,5 +13,6 @@
         <module>ocula-core</module>
         <module>ocula-java-example</module>
         <module>ocula-kotlin-example</module>
+        <module>ocula-selenium</module>
     </modules>
 </project>
