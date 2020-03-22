@@ -12,6 +12,7 @@ import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
 import com.har01d.ocula.queue.enqueue
+import com.har01d.ocula.util.defaultUserAgents
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ class Spider<T>(private val parser: Parser<T>) {
     }
 
     private val requests = mutableListOf<Request>()
+    var userAgents: List<String> = defaultUserAgents
     var authHandler: AuthHandler? = null
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
@@ -113,6 +115,7 @@ class Spider<T>(private val parser: Parser<T>) {
         authHandler?.let {
             preHandlers += authHandler!!
         }
+        httpClient.userAgents = userAgents
     }
 
     private fun enqueue(queue: RequestQueue) {

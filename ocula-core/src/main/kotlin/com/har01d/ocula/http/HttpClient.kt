@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import java.net.HttpCookie
 
 interface HttpClient {
+    var userAgents: List<String>
     fun dispatch(request: Request): Response
 }
 
@@ -17,6 +18,8 @@ class FuelHttpClient : HttpClient {
         val logger: Logger = LoggerFactory.getLogger(FuelHttpClient::class.java)
     }
 
+    override var userAgents = listOf<String>()
+
     override fun dispatch(request: Request): Response {
         logger.debug("[Request] ${request.method} ${request.url}")
         val req = when (request.method) {
@@ -24,10 +27,13 @@ class FuelHttpClient : HttpClient {
             HttpMethod.POST -> request.url.httpPost(request.parameters)
             HttpMethod.PUT -> request.url.httpPut(request.parameters)
         }
+        req.allowRedirects(request.allowRedirects)
         if (request.cookies.isNotEmpty()) {
             req.header("Cookie", request.cookies.joinToString("&"))
         }
-        req.allowRedirects(request.allowRedirects)
+        if (userAgents.isNotEmpty()) {
+            req.header("User-Agent", userAgents.random())
+        }
         val (_, response, result) = req.header(request.headers.toMap()).responseString()
         when (result) {
             is Result.Failure -> throw result.getException()
