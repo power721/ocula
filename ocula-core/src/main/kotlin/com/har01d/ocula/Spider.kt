@@ -1,5 +1,7 @@
 package com.har01d.ocula
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.handler.*
 import com.har01d.ocula.http.FuelHttpClient
@@ -14,12 +16,17 @@ import com.har01d.ocula.queue.RequestQueue
 import com.har01d.ocula.queue.enqueue
 import com.har01d.ocula.util.defaultHttpHeaders
 import com.har01d.ocula.util.defaultUserAgents
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 
 
 class Spider<T>(private val parser: Parser<T>) {
@@ -45,6 +52,24 @@ class Spider<T>(private val parser: Parser<T>) {
 
     constructor(parser: Parser<T>, vararg urls: String) : this(parser) {
         requests += urls.map { Request(it) }
+    }
+
+    init {
+        Configuration.setDefaults(object : Configuration.Defaults {
+            private val mapper = jacksonObjectMapper().apply {
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
+            private val jsonProvider = JacksonJsonProvider(mapper)
+            private val mappingProvider = JacksonMappingProvider(mapper)
+
+            override fun jsonProvider() = jsonProvider
+
+            override fun mappingProvider() = mappingProvider
+
+            override fun options(): Set<Option> {
+                return EnumSet.noneOf(Option::class.java)
+            }
+        })
     }
 
     fun addUrl(url: String) {

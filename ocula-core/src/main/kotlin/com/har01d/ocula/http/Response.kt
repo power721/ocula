@@ -2,6 +2,7 @@ package com.har01d.ocula.http
 
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.TypeRef
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
@@ -20,7 +21,7 @@ data class Response(
         Jsoup.parse(body)
     }
 
-    private val jsonDocument: DocumentContext by lazy {
+    private val json: DocumentContext by lazy {
         JsonPath.parse(body)
     }
 
@@ -28,9 +29,13 @@ data class Response(
 
     }
 
-    fun select(cssQuery: String): Elements = document.select(cssQuery)
+    fun <T> jsonPath(path: String, clazz: Class<T>): T = json.read(path, clazz)
 
-    fun <T> jsonPath(path: String): T = jsonDocument.read(path)
+    fun <T> jsonPath(path: String, type: TypeRef<T>): T = json.read(path, type)
+
+    fun <T> jsonPath(path: String): T = json.read(path)
+
+    fun select(cssQuery: String): Elements = document.select(cssQuery)
 
     fun regex(pattern: String): MatchResult? {
         val regex = pattern.toRegex()
