@@ -20,10 +20,7 @@ import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -48,6 +45,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     var queueCrawler: RequestQueue = queueParser
     var crawler: Crawler? = null
     var interval: Long = 500L
+    var concurrency: Int = 1
     private var finished = false
 
     constructor(parser: Parser<T>, vararg urls: String) : this(parser) {
@@ -121,10 +119,14 @@ open class Spider<T>(private val parser: Parser<T>) {
         }
 
         parser.spider = this@Spider
-        val job = GlobalScope.launch {
-            parse()
+        val jobs = mutableListOf<Job>()
+        repeat(concurrency) {
+            val job = GlobalScope.launch {
+                parse()
+            }
+            jobs += job
         }
-        job.join()
+        jobs.forEach { it.join() }
 
         postHandle()
         listeners.forEach { it.onFinish() }
@@ -194,7 +196,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     private suspend fun crawl() {
         var referer: String? = null
         while (true) {
-            val request = queueCrawler.poll()
+            val request = queueCrawler.take()
             try {
                 if (!dedupHandler.handle(request)) {
                     continue
@@ -232,42 +234,44 @@ open class Spider<T>(private val parser: Parser<T>) {
     private suspend fun parse() {
         var referer: String? = null
         while (true) {
-            val request = queueParser.poll()
-            try {
-                if (!dedupHandler.handle(request)) {
-                    continue
-                }
-                setHeaders(request, referer)
-                val response = try {
-                    dispatch(request)
-                } catch (e: Exception) {
-                    listeners.forEach { it.onDownloadFailed(request, e) }
-                    throw e
-                }
-                referer = request.url
-                listeners.forEach { it.onDownloadSuccess(request, response) }
-
-                val result = try {
-                    parser.parse(request, response)
-                } catch (e: Exception) {
-                    listeners.forEach { it.onParseFailed(request, response, e) }
-                    throw e
-                }
-                listeners.forEach { it.onParseSuccess(request, response, result) }
-
-                resultHandlers.forEach {
-                    try {
-                        it.handle(request, response, result)
-                    } catch (e: Exception) {
-                        listeners.forEach { it.onError(e) }
-                        logger.warn("Handle result failed", e)
+            val request = queueParser.poll(1000L)
+            if (request != null) {
+                try {
+                    if (!dedupHandler.handle(request)) {
+                        continue
                     }
-                }
+                    setHeaders(request, referer)
+                    val response = try {
+                        dispatch(request)
+                    } catch (e: Exception) {
+                        listeners.forEach { it.onDownloadFailed(request, e) }
+                        throw e
+                    }
+                    referer = request.url
+                    listeners.forEach { it.onDownloadSuccess(request, response) }
 
-                delay(interval)
-            } catch (e: Exception) {
-                listeners.forEach { it.onError(e) }
-                logger.warn("Parse page failed", e)
+                    val result = try {
+                        parser.parse(request, response)
+                    } catch (e: Exception) {
+                        listeners.forEach { it.onParseFailed(request, response, e) }
+                        throw e
+                    }
+                    listeners.forEach { it.onParseSuccess(request, response, result) }
+
+                    resultHandlers.forEach {
+                        try {
+                            it.handle(request, response, result)
+                        } catch (e: Exception) {
+                            listeners.forEach { it.onError(e) }
+                            logger.warn("Handle result failed", e)
+                        }
+                    }
+
+                    delay(interval)
+                } catch (e: Exception) {
+                    listeners.forEach { it.onError(e) }
+                    logger.warn("Parse page failed", e)
+                }
             }
 
             if (finished && queueParser.isEmpty()) {
