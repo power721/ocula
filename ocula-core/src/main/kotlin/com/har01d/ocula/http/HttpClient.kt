@@ -1,8 +1,6 @@
 package com.har01d.ocula.http
 
-import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.fuel.httpPost
-import com.github.kittinunf.fuel.httpPut
+import com.github.kittinunf.fuel.*
 import com.github.kittinunf.result.Result
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,6 +24,9 @@ class FuelHttpClient : HttpClient {
             HttpMethod.GET -> request.url.httpGet(request.parameters)
             HttpMethod.POST -> request.url.httpPost(request.parameters)
             HttpMethod.PUT -> request.url.httpPut(request.parameters)
+            HttpMethod.PATCH -> request.url.httpPatch(request.parameters)
+            HttpMethod.DELETE -> request.url.httpDelete(request.parameters)
+            HttpMethod.HEAD -> request.url.httpHead(request.parameters)
         }
         req.allowRedirects(request.allowRedirects)
         if (request.cookies.isNotEmpty()) {
