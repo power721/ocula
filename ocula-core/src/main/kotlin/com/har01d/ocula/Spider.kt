@@ -5,7 +5,6 @@ import com.har01d.ocula.http.FuelHttpClient
 import com.har01d.ocula.http.HttpClient
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.Parser
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

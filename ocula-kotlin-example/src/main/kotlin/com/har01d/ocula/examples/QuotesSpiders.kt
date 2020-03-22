@@ -4,7 +4,6 @@ import com.har01d.ocula.*
 import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
 
 
 fun main() {
