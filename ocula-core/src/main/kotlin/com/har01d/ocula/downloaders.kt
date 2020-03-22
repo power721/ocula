@@ -30,6 +30,7 @@ class FuelDownloader : Downloader {
         if (request.cookies.isNotEmpty()) {
             req.header("Cookie", request.cookies.joinToString("&"))
         }
+        req.allowRedirects(request.allowRedirects)
         val (_, response, result) = req.header(request.headers.toMap()).responseString()
         when (result) {
             is Result.Failure -> throw result.getException()

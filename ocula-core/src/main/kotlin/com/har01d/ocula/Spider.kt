@@ -17,7 +17,7 @@ class Spider<T>(private val parser: Parser<T>) {
     }
 
     private val requests = mutableListOf<Request>()
-    private var authHandler: AuthHandler? = null
+    var authHandler: AuthHandler? = null
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()

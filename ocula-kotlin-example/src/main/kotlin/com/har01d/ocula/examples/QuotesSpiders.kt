@@ -9,7 +9,7 @@ import com.har01d.ocula.parser.AbstractParser
 
 fun main() {
     val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/").apply {
-        preHandlers += CsrfFormAuthHandler()
+        authHandler = CsrfFormAuthHandler()
         listeners += LogListener
         resultHandlers += LogResultHandler
         resultHandlers += FileResultHandler("/tmp/quotes.json")
@@ -44,10 +44,11 @@ class CsrfFormAuthHandler : AuthHandler() {
         val formRequest = Request(url, HttpMethod.POST, listOf(
                 "csrf_token" to token,
                 "username" to "user",
-                "password" to "password"
-        ), cookies = res.cookies.toMutableList())
-        val response = spider.downloader.dispatch(formRequest)
-        request.cookies += response.cookies
+                "password" to "user"
+        ), cookies = res.cookies.toMutableList(), allowRedirects = false)
+        spider.downloader.dispatch(formRequest).apply {
+            request.cookies += cookies
+        }
     }
 }
 
