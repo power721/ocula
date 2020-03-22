@@ -42,7 +42,7 @@ class FuelHttpClient : HttpClient {
                 logger.debug("[Response] status code: ${response.statusCode}  content length: ${response.contentLength}")
                 return Response(
                         request.url,
-                        result.get(),
+                        result.value,
                         response.statusCode,
                         response.responseMessage,
                         response.headers,

@@ -12,6 +12,7 @@ import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
 import com.har01d.ocula.queue.enqueue
+import com.har01d.ocula.util.defaultHttpHeaders
 import com.har01d.ocula.util.defaultUserAgents
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -27,6 +28,7 @@ class Spider<T>(private val parser: Parser<T>) {
 
     private val requests = mutableListOf<Request>()
     var userAgents: List<String> = defaultUserAgents
+    var httpHeaders: List<Pair<String, Collection<String>>> = defaultHttpHeaders
     var authHandler: AuthHandler? = null
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
@@ -152,19 +154,33 @@ class Spider<T>(private val parser: Parser<T>) {
         }
     }
 
+    private fun setHeaders(request: Request, referer: String?) {
+        if (referer != null && !request.headers.containsKey("Referer")) {
+            request.headers["Referer"] = listOf(referer)
+        }
+        for (header in httpHeaders) {
+            if (!request.headers.containsKey(header.first)) {
+                request.headers += header
+            }
+        }
+    }
+
     private suspend fun crawl() {
+        var referer: String? = null
         while (true) {
             val request = queueCrawler.poll()
             try {
                 if (!dedupHandler.handle(request)) {
                     continue
                 }
+                setHeaders(request, referer)
                 val response = try {
                     dispatch(request)
                 } catch (e: Exception) {
                     listeners.forEach { it.onDownloadFailed(request, e) }
                     throw e
                 }
+                referer = request.url
                 listeners.forEach { it.onDownloadSuccess(request, response) }
 
                 try {
@@ -188,18 +204,21 @@ class Spider<T>(private val parser: Parser<T>) {
     }
 
     private suspend fun parse() {
+        var referer: String? = null
         while (true) {
             val request = queueParser.poll()
             try {
                 if (!dedupHandler.handle(request)) {
                     continue
                 }
+                setHeaders(request, referer)
                 val response = try {
                     dispatch(request)
                 } catch (e: Exception) {
                     listeners.forEach { it.onDownloadFailed(request, e) }
                     throw e
                 }
+                referer = request.url
                 listeners.forEach { it.onDownloadSuccess(request, response) }
 
                 val result = try {
