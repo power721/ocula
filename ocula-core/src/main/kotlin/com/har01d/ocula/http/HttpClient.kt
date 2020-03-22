@@ -1,23 +1,20 @@
-package com.har01d.ocula
+package com.har01d.ocula.http
 
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.fuel.httpPut
 import com.github.kittinunf.result.Result
-import com.har01d.ocula.http.HttpMethod
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.HttpCookie
 
-interface Downloader {
+interface HttpClient {
     fun dispatch(request: Request): Response
 }
 
-class FuelDownloader : Downloader {
+class FuelHttpClient : HttpClient {
     companion object {
-        val logger: Logger = LoggerFactory.getLogger(FuelDownloader::class.java)
+        val logger: Logger = LoggerFactory.getLogger(FuelHttpClient::class.java)
     }
 
     override fun dispatch(request: Request): Response {

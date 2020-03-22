@@ -39,14 +39,14 @@ class QuotesParser : AbstractParser<List<Quote>>() {
 class CsrfFormAuthHandler : AuthHandler() {
     override fun handle(request: Request) {
         val url = "http://quotes.toscrape.com/login"
-        val res = spider.downloader.dispatch(Request(url))
+        val res = spider.dispatch(Request(url))
         val token = res.select("input[name=csrf_token]").`val`()
         val formRequest = Request(url, HttpMethod.POST, listOf(
                 "csrf_token" to token,
                 "username" to "user",
                 "password" to "user"
         ), cookies = res.cookies.toMutableList(), allowRedirects = false)
-        spider.downloader.dispatch(formRequest).apply {
+        spider.dispatch(formRequest).apply {
             request.cookies += cookies
         }
     }

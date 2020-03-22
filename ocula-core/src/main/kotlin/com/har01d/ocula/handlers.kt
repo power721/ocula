@@ -43,7 +43,7 @@ val sessionHandler = fun(request: Request, response: Response) {
 class FormAuthHandler(private val actionUrl: String, private val parameters: Parameters, val block: (request: Request, response: Response) -> Unit = sessionHandler) : AuthHandler() {
     override fun handle(request: Request) {
         val formRequest = Request(actionUrl, HttpMethod.POST, parameters)
-        val response = spider.downloader.dispatch(formRequest)
+        val response = spider.dispatch(formRequest)
         block(request, response)
     }
 }

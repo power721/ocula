@@ -1,6 +1,8 @@
 package com.har01d.ocula
 
 import com.har01d.ocula.crawler.Crawler
+import com.har01d.ocula.http.FuelHttpClient
+import com.har01d.ocula.http.HttpClient
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.Parser
@@ -22,7 +24,7 @@ class Spider<T>(private val parser: Parser<T>) {
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener<T>>(StatisticListener)
-    var downloader: Downloader = FuelDownloader()
+    var httpClient: HttpClient = FuelHttpClient()
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = queueParser
     var crawler: Crawler? = null
@@ -60,6 +62,8 @@ class Spider<T>(private val parser: Parser<T>) {
     fun follow(refer: String, vararg urls: String) = queueParser.enqueue(refer, *urls)
 
     fun follow(refer: String, vararg requests: Request) = queueParser.enqueue(refer, *requests)
+
+    fun dispatch(request: Request) = httpClient.dispatch(request)
 
     fun run() = runBlocking {
         validate()
@@ -143,7 +147,7 @@ class Spider<T>(private val parser: Parser<T>) {
             val request = queueCrawler.poll()
             try {
                 val response = try {
-                    downloader.dispatch(request)
+                    dispatch(request)
                 } catch (e: Exception) {
                     listeners.forEach { it.onDownloadFailed(request, e) }
                     throw e
@@ -175,7 +179,7 @@ class Spider<T>(private val parser: Parser<T>) {
             val request = queueParser.poll()
             try {
                 val response = try {
-                    downloader.dispatch(request)
+                    dispatch(request)
                 } catch (e: Exception) {
                     listeners.forEach { it.onDownloadFailed(request, e) }
                     throw e
