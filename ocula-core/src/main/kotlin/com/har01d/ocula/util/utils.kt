@@ -3,6 +3,7 @@ package com.har01d.ocula.util
 import java.net.MalformedURLException
 import java.net.URL
 import java.security.MessageDigest
+import java.util.concurrent.ThreadLocalRandom
 
 var defaultUserAgents = listOf(
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36",
@@ -37,12 +38,22 @@ var defaultHttpHeaders = listOf(
         "Accept-Language" to listOf("en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,ja;q=0.6,zh-TW;q=0.5")
 )
 
+val TOKENS = "Ok4jShBpcvKY5gTQMVRsEHfGe3nDdb81IJwrqLFP0UC6xilazo2ZWut9yNmA7X".toCharArray()
+
+fun generateId(length: Int): String {
+    val sb = StringBuilder()
+    val random = ThreadLocalRandom.current()
+    for (i in 1..length) {
+        sb.append(TOKENS[random.nextInt(TOKENS.size)])
+    }
+    return sb.toString()
+}
+
 fun normalizeUrl(refer: String, url: String) =
         try {
             val base = URL(refer)
             val uri = if (url.startsWith("?")) base.path + url else url
-            val abs = URL(base, uri)
-            abs.toExternalForm()
+            URL(base, uri).toExternalForm()
         } catch (e: MalformedURLException) {
             null
         }

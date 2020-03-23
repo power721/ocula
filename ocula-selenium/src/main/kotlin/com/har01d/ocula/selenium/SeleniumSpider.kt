@@ -2,6 +2,7 @@ package com.har01d.ocula.selenium
 
 import com.google.common.base.Function
 import com.har01d.ocula.Spider
+import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.parser.Parser
 import org.openqa.selenium.WebDriver
@@ -21,6 +22,11 @@ class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
     }
 
     constructor(parser: Parser<T>, vararg urls: String) : this(parser) {
+        requests += urls.map { Request(it) }
+    }
+
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String) : this(parser) {
+        this.crawler = crawler
         requests += urls.map { Request(it) }
     }
 

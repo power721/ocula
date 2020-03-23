@@ -8,8 +8,8 @@ import com.har01d.ocula.parser.AbstractParser
 import org.jsoup.Jsoup
 
 fun main() {
-    val spider = Spider(TiebaParser(), "http://tieba.baidu.com/f/index/forumpark?cn=&ci=0&pcn=%E5%B0%8F%E8%AF%B4&pci=161&ct=&st=new&pn=1")
-    spider.crawler = TiebaCrawler()
+    val url = "http://tieba.baidu.com/f/index/forumpark?cn=&ci=0&pcn=%E5%B0%8F%E8%AF%B4&pci=161&ct=&st=new&pn=1"
+    val spider = Spider(TiebaCrawler(), TiebaParser(), url)
     spider.run()
 }
 
@@ -29,17 +29,12 @@ class TiebaCrawler : AbstractCrawler() {
     }
 }
 
-class TiebaParser : AbstractParser<Tieba?>() {
-    override fun parse(request: Request, response: Response): Tieba? {
+class TiebaParser : AbstractParser<Tieba>() {
+    override fun parse(request: Request, response: Response): Tieba {
         val doc = Jsoup.parse(response.body.replace("<!--", "").replace("-->", ""))
         val name = doc.select("a.card_title_fname").text()
-        val text = doc.select("div.th_footer_l").text()
-        val m = "共有主题数(\\d+)个，贴子数 (\\d+)篇 .*数(\\d+)".toRegex().find(text)
-        return if (m != null) {
-            Tieba(name, m.groupValues[3].toInt(), m.groupValues[1].toInt(), m.groupValues[2].toInt())
-        } else {
-            null
-        }
+        val elements = doc.select("div.th_footer_l .red_text").text().split(" ")
+        return Tieba(name, elements[2].toInt(), elements[0].toInt(), elements[1].toInt())
     }
 }
 

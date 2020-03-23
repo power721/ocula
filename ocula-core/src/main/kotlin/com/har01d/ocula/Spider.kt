@@ -52,6 +52,11 @@ open class Spider<T>(private val parser: Parser<T>) {
         requests += urls.map { Request(it) }
     }
 
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String) : this(parser) {
+        this.crawler = crawler
+        requests += urls.map { Request(it) }
+    }
+
     init {
         Configuration.setDefaults(object : Configuration.Defaults {
             private val mapper = jacksonObjectMapper().apply {
@@ -147,7 +152,7 @@ open class Spider<T>(private val parser: Parser<T>) {
             }
         }
         if (resultHandlers.isEmpty()) {
-            resultHandlers.add(LogResultHandler)
+            resultHandlers += LogResultHandler
         }
         authHandler?.let {
             preHandlers += authHandler!!

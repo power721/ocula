@@ -16,8 +16,8 @@ class SeleniumHttpClient(private val webDriver: WebDriver, timeoutInSeconds: Lon
         val logger: Logger = LoggerFactory.getLogger(SeleniumHttpClient::class.java)
     }
 
-    var expectedConditions: Function<WebDriver, *>? = null
     override var userAgents = listOf<String>()
+    var expectedConditions: Function<WebDriver, *>? = null
     private val wait = WebDriverWait(webDriver, timeoutInSeconds)
 
     override fun dispatch(request: Request): Response {

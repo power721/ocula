@@ -8,12 +8,12 @@ import com.har01d.ocula.parser.AbstractParser
 import com.jayway.jsonpath.TypeRef
 
 fun main() {
-    val spider = Spider(JsonQuotesParser(), "http://quotes.toscrape.com/api/quotes")
+    val spider = Spider(QuotesJsonParser(), "http://quotes.toscrape.com/api/quotes")
     spider.resultHandlers += JsonFileResultHandler("/tmp/quotes.json")
     spider.run()
 }
 
-class JsonQuotesParser : AbstractParser<List<JsonQuote>>() {
+class QuotesJsonParser : AbstractParser<List<JsonQuote>>() {
     override fun parse(request: Request, response: Response): List<JsonQuote> {
         val typeRef: TypeRef<List<JsonQuote>> = object : TypeRef<List<JsonQuote>>() {}
         val quotes: List<JsonQuote> = response.jsonPath("$.quotes", typeRef)

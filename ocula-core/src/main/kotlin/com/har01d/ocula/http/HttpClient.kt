@@ -2,6 +2,7 @@ package com.har01d.ocula.http
 
 import com.github.kittinunf.fuel.*
 import com.github.kittinunf.result.Result
+import com.har01d.ocula.util.generateId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.HttpCookie
@@ -19,7 +20,8 @@ class FuelHttpClient : HttpClient {
     override var userAgents = listOf<String>()
 
     override fun dispatch(request: Request): Response {
-        logger.debug("[Request] ${request.method} ${request.url}")
+        val id = generateId(6)
+        logger.debug("[Request ][$id] ${request.method} ${request.url}")
         val req = when (request.method) {
             HttpMethod.GET -> request.url.httpGet(request.parameters)
             HttpMethod.POST -> request.url.httpPost(request.parameters)
@@ -39,7 +41,7 @@ class FuelHttpClient : HttpClient {
         when (result) {
             is Result.Failure -> throw result.getException()
             is Result.Success -> {
-                logger.debug("[Response] status code: ${response.statusCode}  content length: ${response.contentLength}")
+                logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
                 return Response(
                         request.url,
                         result.value,
