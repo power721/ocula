@@ -94,6 +94,11 @@ open class Spider<T>(private val parser: Parser<T>) {
         httpProxies += HttpProxy(hostname, port)
     }
 
+    fun downloadImages(directory: String) {
+        resultHandlers += ImageResultHandler(directory)
+        run()
+    }
+
     fun finish() {
         finished = true
     }
@@ -297,4 +302,4 @@ open class Spider<T>(private val parser: Parser<T>) {
     }
 }
 
-class SimpleSpider<T>(url: String, parse: (request: Request, response: Response) -> T) : Spider<T>(SimpleParser(parse), url)
+class SimpleSpider<T>(vararg url: String, parse: (request: Request, response: Response) -> T) : Spider<T>(SimpleParser(parse), *url)
