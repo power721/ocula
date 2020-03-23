@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import java.net.HttpCookie
 
 interface HttpClient {
-    var userAgents: List<String>
+    var userAgentProvider: UserAgentProvider
     var proxyProvider: ProxyProvider
     fun dispatch(request: Request): Response
 }
@@ -19,7 +19,7 @@ class FuelHttpClient : HttpClient {
         val logger: Logger = LoggerFactory.getLogger(FuelHttpClient::class.java)
     }
 
-    override lateinit var userAgents: List<String>
+    override lateinit var userAgentProvider: UserAgentProvider
     override lateinit var proxyProvider: ProxyProvider
 
     override fun dispatch(request: Request): Response {
@@ -44,8 +44,8 @@ class FuelHttpClient : HttpClient {
         if (request.cookies.isNotEmpty()) {
             req.header("Cookie", request.cookies.joinToString("&"))
         }
-        if (userAgents.isNotEmpty()) {
-            req.header("User-Agent", userAgents.random())
+        if (userAgentProvider.hasAny()) {
+            req.header("User-Agent", userAgentProvider.select())
         }
         val (_, response, result) = req.header(request.headers.toMap()).responseString()
         when (result) {

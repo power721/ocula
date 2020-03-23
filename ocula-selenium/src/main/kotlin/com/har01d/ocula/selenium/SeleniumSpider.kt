@@ -56,8 +56,8 @@ class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
         }
         cap.isJavascriptEnabled = true
 
-        if (proxyProvider.hasAny()) {
-            val httpProxy = proxyProvider.select()
+        if (proxyProvider!!.hasAny()) {
+            val httpProxy = proxyProvider!!.select()
             val proxy = Proxy()
             proxy.httpProxy = httpProxy.hostname + ":" + httpProxy.port
             proxy.sslProxy = proxy.httpProxy

@@ -9,3 +9,13 @@ class RandomProxyProvider(private val httpProxies: List<HttpProxy>) : ProxyProvi
     override fun select() = httpProxies.random()
     override fun hasAny() = httpProxies.isNotEmpty()
 }
+
+interface UserAgentProvider {
+    fun select(): String
+    fun hasAny(): Boolean
+}
+
+class RandomUserAgentProvider(private val userAgents: List<String>) : UserAgentProvider {
+    override fun select() = userAgents.random()
+    override fun hasAny() = userAgents.isNotEmpty()
+}

@@ -31,9 +31,10 @@ open class Spider<T>(private val parser: Parser<T>) {
 
     val requests = mutableListOf<Request>()
     var userAgents: List<String> = defaultUserAgents
+    var userAgentProvider: UserAgentProvider? = null
     var httpHeaders: Map<String, Collection<String>> = defaultHttpHeaders
     val httpProxies = mutableListOf<HttpProxy>()
-    var proxyProvider: ProxyProvider = RandomProxyProvider(httpProxies)
+    var proxyProvider: ProxyProvider? = null
     var authHandler: AuthHandler? = null
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
@@ -166,8 +167,10 @@ open class Spider<T>(private val parser: Parser<T>) {
         authHandler?.let {
             preHandlers += authHandler!!
         }
-        httpClient.userAgents = userAgents
-        httpClient.proxyProvider = proxyProvider
+        userAgentProvider = userAgentProvider ?: RandomUserAgentProvider(userAgents)
+        httpClient.userAgentProvider = userAgentProvider!!
+        proxyProvider = proxyProvider ?: RandomProxyProvider(httpProxies)
+        httpClient.proxyProvider = proxyProvider!!
     }
 
     private fun enqueue(queue: RequestQueue) {
