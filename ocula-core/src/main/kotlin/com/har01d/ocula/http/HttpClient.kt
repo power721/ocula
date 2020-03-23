@@ -10,7 +10,7 @@ import java.net.HttpCookie
 
 interface HttpClient {
     var userAgents: List<String>
-    var httpProxies: List<HttpProxy>
+    var proxyProvider: ProxyProvider
     fun dispatch(request: Request): Response
 }
 
@@ -19,14 +19,14 @@ class FuelHttpClient : HttpClient {
         val logger: Logger = LoggerFactory.getLogger(FuelHttpClient::class.java)
     }
 
-    override var userAgents = listOf<String>()
-    override var httpProxies = listOf<HttpProxy>()
+    override lateinit var userAgents: List<String>
+    override lateinit var proxyProvider: ProxyProvider
 
     override fun dispatch(request: Request): Response {
         val id = generateId(6)
         logger.debug("[Request][$id] ${request.method} ${request.url}")
-        if (httpProxies.isNotEmpty()) {
-            val httpProxy = httpProxies.random()
+        if (proxyProvider.hasAny()) {
+            val httpProxy = proxyProvider.select()
             FuelManager.instance.proxy = httpProxy.toProxy()
             logger.debug("[Proxy][$id] use $httpProxy")
         } else {

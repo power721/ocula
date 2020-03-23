@@ -2,7 +2,7 @@ package com.har01d.ocula.selenium
 
 import com.google.common.base.Function
 import com.har01d.ocula.http.HttpClient
-import com.har01d.ocula.http.HttpProxy
+import com.har01d.ocula.http.ProxyProvider
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import org.openqa.selenium.By
@@ -17,8 +17,9 @@ class SeleniumHttpClient(private val webDriver: WebDriver, timeoutInSeconds: Int
         val logger: Logger = LoggerFactory.getLogger(SeleniumHttpClient::class.java)
     }
 
-    override var userAgents = listOf<String>()
-    override var httpProxies = listOf<HttpProxy>()
+    override lateinit var userAgents: List<String>
+    override lateinit var proxyProvider: ProxyProvider
+
     var expectedConditions: Function<WebDriver, *>? = null
     private val wait = WebDriverWait(webDriver, timeoutInSeconds.toLong())
 
