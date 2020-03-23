@@ -16,7 +16,7 @@ class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
     var driverType: DriverType = DriverType.CHROME
     var phantomjsExecPath: String? = null
     var expectedConditions: Function<WebDriver, *>? = null
-    var timeoutInSeconds: Long = 10L
+    var timeoutInSeconds: Int = 10
     private val webDriver: WebDriver by lazy {
         driver()
     }
