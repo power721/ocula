@@ -17,7 +17,9 @@ class TiebaCrawler : AbstractCrawler() {
     override fun handle(request: Request, response: Response) {
         val elements = response.select("#ba_list .ba_info")
         for (element in elements) {
-            spider.follow(response.url, element.select("a").first().attr("href"))
+            val name = element.select(".ba_name").text()
+            val url = element.select("a").first().attr("href")
+            spider.follow(response.url, Request(url, extra = mutableMapOf("name" to name)))
         }
 
         val next = response.select("a.next").attr("href")
@@ -32,7 +34,8 @@ class TiebaCrawler : AbstractCrawler() {
 class TiebaParser : AbstractParser<Tieba>() {
     override fun parse(request: Request, response: Response): Tieba {
         val doc = Jsoup.parse(response.body.replace("<!--", "").replace("-->", ""))
-        val name = doc.select("a.card_title_fname").text()
+        val name = request.extra["name"] as String
+        // val name = doc.select("a.card_title_fname").text()
         val elements = doc.select("div.th_footer_l .red_text").text().split(" ")
         return Tieba(name, elements[2].toInt(), elements[0].toInt(), elements[1].toInt())
     }

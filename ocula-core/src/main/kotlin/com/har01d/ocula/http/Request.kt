@@ -8,5 +8,6 @@ data class Request(
         val parameters: List<Pair<String, Any?>>? = null,
         val headers: MutableMap<String, Collection<String>> = mutableMapOf(),
         val cookies: MutableList<HttpCookie> = mutableListOf(),
+        val extra: MutableMap<String, Any> = mutableMapOf(),
         val allowRedirects: Boolean = true
 )
