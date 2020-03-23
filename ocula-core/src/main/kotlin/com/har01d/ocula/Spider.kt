@@ -8,6 +8,7 @@ import com.har01d.ocula.http.*
 import com.har01d.ocula.listener.Listener
 import com.har01d.ocula.listener.StatisticListener
 import com.har01d.ocula.parser.Parser
+import com.har01d.ocula.parser.SimpleParser
 import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
 import com.har01d.ocula.queue.enqueue
@@ -295,3 +296,5 @@ open class Spider<T>(private val parser: Parser<T>) {
         }
     }
 }
+
+class SimpleSpider<T>(url: String, parse: (request: Request, response: Response) -> T) : Spider<T>(SimpleParser(parse), url)

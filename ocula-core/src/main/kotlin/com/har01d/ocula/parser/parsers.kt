@@ -12,3 +12,7 @@ interface Parser<out T> {
 abstract class AbstractParser<T> : Parser<T> {
     override lateinit var spider: Spider<*>
 }
+
+class SimpleParser<T>(val block: (request: Request, response: Response) -> T) : AbstractParser<T>() {
+    override fun parse(request: Request, response: Response) = block(request, response).also { spider.finish() }
+}

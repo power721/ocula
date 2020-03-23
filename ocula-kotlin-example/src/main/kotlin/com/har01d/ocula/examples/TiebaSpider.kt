@@ -17,12 +17,12 @@ class TiebaCrawler : AbstractCrawler() {
     override fun handle(request: Request, response: Response) {
         val elements = response.select("#ba_list .ba_info")
         for (element in elements) {
-            spider.follow(request.url, element.select("a").first().attr("href"))
+            spider.follow(response.url, element.select("a").first().attr("href"))
         }
 
         val next = response.select("a.next").attr("href")
         if (next.isNotEmpty()) {
-            spider.crawl(request.url, next)
+            spider.crawl(response.url, next)
         } else {
             spider.finish()
         }

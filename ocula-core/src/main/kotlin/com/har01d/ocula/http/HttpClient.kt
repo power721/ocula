@@ -53,7 +53,7 @@ class FuelHttpClient : HttpClient {
             is Result.Success -> {
                 logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
                 return Response(
-                        request.url,
+                        response.url.toExternalForm(),
                         result.value,
                         response.statusCode,
                         response.responseMessage,
