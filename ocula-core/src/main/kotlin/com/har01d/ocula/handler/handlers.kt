@@ -33,7 +33,7 @@ object DefaultDedupHandler : DedupHandler {
     override fun handle(request: Request) = true
 }
 
-object HashSetDedupHandler : DedupHandler {
+class HashSetDedupHandler : DedupHandler {
     val set: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
     override fun handle(request: Request) = set.add(request.url)
 }

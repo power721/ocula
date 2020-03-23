@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.handler.*
-import com.har01d.ocula.http.FuelHttpClient
-import com.har01d.ocula.http.HttpClient
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
+import com.har01d.ocula.http.*
 import com.har01d.ocula.listener.Listener
 import com.har01d.ocula.listener.StatisticListener
 import com.har01d.ocula.parser.Parser
@@ -33,14 +30,15 @@ open class Spider<T>(private val parser: Parser<T>) {
 
     val requests = mutableListOf<Request>()
     var userAgents: List<String> = defaultUserAgents
-    var httpHeaders: List<Pair<String, Collection<String>>> = defaultHttpHeaders
+    var httpHeaders: Map<String, Collection<String>> = defaultHttpHeaders
+    val httpProxies = mutableListOf<HttpProxy>()
     var authHandler: AuthHandler? = null
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
-    val listeners = mutableListOf<Listener<T>>(StatisticListener)
+    val listeners = mutableListOf<Listener<T>>(StatisticListener())
     var httpClient: HttpClient = FuelHttpClient()
-    var dedupHandler: DedupHandler = HashSetDedupHandler
+    var dedupHandler: DedupHandler = HashSetDedupHandler()
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = InMemoryRequestQueue()
     var crawler: Crawler? = null
@@ -89,6 +87,10 @@ open class Spider<T>(private val parser: Parser<T>) {
 
     fun formAuth(actionUrl: String, parameters: Parameters, block: (request: Request, response: Response) -> Unit = sessionHandler) {
         authHandler = FormAuthHandler(actionUrl, parameters, block)
+    }
+
+    fun httpProxy(hostname: String, port: Int) {
+        httpProxies += HttpProxy(hostname, port)
     }
 
     fun finish() {
@@ -158,6 +160,7 @@ open class Spider<T>(private val parser: Parser<T>) {
             preHandlers += authHandler!!
         }
         httpClient.userAgents = userAgents
+        httpClient.httpProxies = httpProxies
     }
 
     private fun enqueue(queue: RequestQueue) {
@@ -198,9 +201,9 @@ open class Spider<T>(private val parser: Parser<T>) {
         if (referer != null && !request.headers.containsKey("Referer")) {
             request.headers["Referer"] = listOf(referer)
         }
-        for (header in httpHeaders) {
-            if (!request.headers.containsKey(header.first)) {
-                request.headers += header
+        for (entry in httpHeaders) {
+            if (!request.headers.containsKey(entry.key)) {
+                request.headers[entry.key] = entry.value
             }
         }
     }

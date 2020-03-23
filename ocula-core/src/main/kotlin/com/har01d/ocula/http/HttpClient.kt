@@ -1,6 +1,7 @@
 package com.har01d.ocula.http
 
 import com.github.kittinunf.fuel.*
+import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.result.Result
 import com.har01d.ocula.util.generateId
 import org.slf4j.Logger
@@ -9,6 +10,7 @@ import java.net.HttpCookie
 
 interface HttpClient {
     var userAgents: List<String>
+    var httpProxies: List<HttpProxy>
     fun dispatch(request: Request): Response
 }
 
@@ -18,10 +20,18 @@ class FuelHttpClient : HttpClient {
     }
 
     override var userAgents = listOf<String>()
+    override var httpProxies = listOf<HttpProxy>()
 
     override fun dispatch(request: Request): Response {
         val id = generateId(6)
-        logger.debug("[Request ][$id] ${request.method} ${request.url}")
+        logger.debug("[Request][$id] ${request.method} ${request.url}")
+        if (httpProxies.isNotEmpty()) {
+            val httpProxy = httpProxies.random()
+            FuelManager.instance.proxy = httpProxy.toProxy()
+            logger.debug("[Proxy][$id] use $httpProxy")
+        } else {
+            FuelManager.instance.proxy = null
+        }
         val req = when (request.method) {
             HttpMethod.GET -> request.url.httpGet(request.parameters)
             HttpMethod.POST -> request.url.httpPost(request.parameters)

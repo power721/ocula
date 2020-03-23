@@ -5,6 +5,7 @@ import com.har01d.ocula.Spider
 import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.parser.Parser
+import org.openqa.selenium.Proxy
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.firefox.FirefoxDriver
@@ -54,6 +55,14 @@ class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
             DriverType.PHANTOMJS -> DesiredCapabilities.phantomjs()
         }
         cap.isJavascriptEnabled = true
+
+        if (httpProxies.isNotEmpty()) {
+            val httpProxy = httpProxies.random()
+            val proxy = Proxy()
+            proxy.httpProxy = httpProxy.hostname + ":" + httpProxy.port
+            proxy.sslProxy = proxy.httpProxy
+            cap.setCapability("proxy", proxy)
+        }
 
         if (driverType == DriverType.PHANTOMJS) {
             if (phantomjsExecPath == null) {

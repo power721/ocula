@@ -37,7 +37,7 @@ abstract class AbstractListener<T> : Listener<T> {
     override fun onFinish() {}
 }
 
-object StatisticListener : AbstractListener<Any?>() {
+class StatisticListener : AbstractListener<Any?>() {
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
     private var downloaded = 0
     private var crawled = 0
