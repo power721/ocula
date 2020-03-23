@@ -167,9 +167,9 @@ open class Spider<T>(private val parser: Parser<T>) {
         authHandler?.let {
             preHandlers += authHandler!!
         }
-        userAgentProvider = userAgentProvider ?: RandomUserAgentProvider(userAgents)
+        userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
         httpClient.userAgentProvider = userAgentProvider!!
-        proxyProvider = proxyProvider ?: RandomProxyProvider(httpProxies)
+        proxyProvider = proxyProvider ?: RoundRobinProxyProvider(httpProxies)
         httpClient.proxyProvider = proxyProvider!!
     }
 
