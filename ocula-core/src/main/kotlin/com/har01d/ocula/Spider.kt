@@ -42,7 +42,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     var httpClient: HttpClient = FuelHttpClient()
     var dedupHandler: DedupHandler = HashSetDedupHandler
     var queueParser: RequestQueue = InMemoryRequestQueue()
-    var queueCrawler: RequestQueue = queueParser
+    var queueCrawler: RequestQueue = InMemoryRequestQueue()
     var crawler: Crawler? = null
     var interval: Long = 500L
     var concurrency: Int = 1
@@ -112,7 +112,7 @@ open class Spider<T>(private val parser: Parser<T>) {
 
             crawler!!.spider = this@Spider
             GlobalScope.launch {
-                crawl()
+                crawl(this)
             }
         } else {
             enqueue(queueParser)
@@ -122,7 +122,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         val jobs = mutableListOf<Job>()
         repeat(concurrency) {
             val job = GlobalScope.launch {
-                parse()
+                parse(this)
             }
             jobs += job
         }
@@ -193,9 +193,9 @@ open class Spider<T>(private val parser: Parser<T>) {
         }
     }
 
-    private suspend fun crawl() {
+    private suspend fun crawl(scope: CoroutineScope) {
         var referer: String? = null
-        while (true) {
+        while (scope.isActive) {
             val request = queueCrawler.take()
             try {
                 if (!dedupHandler.handle(request)) {
@@ -231,9 +231,9 @@ open class Spider<T>(private val parser: Parser<T>) {
         }
     }
 
-    private suspend fun parse() {
+    private suspend fun parse(scope: CoroutineScope) {
         var referer: String? = null
-        while (true) {
+        while (scope.isActive) {
             val request = queueParser.poll(1000L)
             if (request != null) {
                 try {

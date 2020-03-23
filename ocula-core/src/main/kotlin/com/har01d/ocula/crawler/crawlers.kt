@@ -6,7 +6,7 @@ import com.har01d.ocula.http.Response
 
 interface Crawler {
     var spider: Spider<*>
-    fun handle(request: Request, response: Response): List<Request>
+    fun handle(request: Request, response: Response)
 }
 
 abstract class AbstractCrawler : Crawler {

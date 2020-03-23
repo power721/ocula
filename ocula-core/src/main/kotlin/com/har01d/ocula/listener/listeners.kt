@@ -43,6 +43,11 @@ object StatisticListener : AbstractListener<Any?>() {
     private var crawled = 0
     private var parsed = 0
     private var errors = 0
+    private var startTime: Long = 0
+
+    override fun onStart() {
+        startTime = System.currentTimeMillis()
+    }
 
     override fun onDownloadSuccess(request: Request, response: Response) {
         downloaded++
@@ -61,7 +66,8 @@ object StatisticListener : AbstractListener<Any?>() {
     }
 
     override fun onFinish() {
-        logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  Errors: $errors")
+        val time = (System.currentTimeMillis() - startTime) / 1000
+        logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  Errors: $errors  Time: ${time}s")
     }
 }
 
