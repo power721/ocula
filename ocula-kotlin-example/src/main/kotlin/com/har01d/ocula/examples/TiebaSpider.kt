@@ -9,7 +9,6 @@ import org.jsoup.Jsoup
 
 fun main() {
     val spider = Spider(TiebaParser(), "http://tieba.baidu.com/f/index/forumpark?cn=&ci=0&pcn=%E5%B0%8F%E8%AF%B4&pci=161&ct=&st=new&pn=1")
-    spider.concurrency = Runtime.getRuntime().availableProcessors()
     spider.crawler = TiebaCrawler()
     spider.run()
 }

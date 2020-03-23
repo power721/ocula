@@ -45,7 +45,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     var queueCrawler: RequestQueue = InMemoryRequestQueue()
     var crawler: Crawler? = null
     var interval: Long = 500L
-    var concurrency: Int = 1
+    var concurrency: Int = 0
     private var finished = false
 
     constructor(parser: Parser<T>, vararg urls: String) : this(parser) {
@@ -139,6 +139,13 @@ open class Spider<T>(private val parser: Parser<T>) {
     }
 
     private fun prepare() {
+        if (concurrency == 0) {
+            concurrency = if (crawler != null) {
+                Runtime.getRuntime().availableProcessors()
+            } else {
+                1
+            }
+        }
         if (resultHandlers.isEmpty()) {
             resultHandlers.add(LogResultHandler)
         }
