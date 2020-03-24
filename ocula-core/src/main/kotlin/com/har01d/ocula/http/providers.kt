@@ -2,34 +2,38 @@ package com.har01d.ocula.http
 
 import java.util.concurrent.atomic.AtomicInteger
 
-interface ProxyProvider {
-    fun select(): HttpProxy
+interface Provider<T> {
+    fun select(): T
     fun hasAny(): Boolean
 }
 
-class RandomProxyProvider(private val httpProxies: List<HttpProxy>) : ProxyProvider {
-    override fun select() = httpProxies.random()
-    override fun hasAny() = httpProxies.isNotEmpty()
+abstract class RandomProvider<T>(private val collection: List<T>) {
+    fun select() = collection.random()
+    fun hasAny() = collection.isNotEmpty()
 }
 
-class RoundRobinProxyProvider(private val httpProxies: List<HttpProxy>) : ProxyProvider {
+abstract class RoundRobinProvider<T>(private val collection: List<T>) {
     private val id = AtomicInteger()
-    override fun select() = httpProxies[id.getAndIncrement() % httpProxies.size]
-    override fun hasAny() = httpProxies.isNotEmpty()
+    fun select() = collection[index()]
+    fun hasAny() = collection.isNotEmpty()
+
+    private fun index(): Int {
+        var index = id.getAndIncrement()
+        val size = collection.size
+        if (index < size) {
+            return index
+        }
+        while (!id.compareAndSet(index, index % size)) {
+            index = id.get()
+        }
+        return index % size
+    }
 }
 
-interface UserAgentProvider {
-    fun select(): String
-    fun hasAny(): Boolean
-}
+interface ProxyProvider : Provider<HttpProxy>
+class RandomProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RandomProvider<HttpProxy>(httpProxies)
+class RoundRobinProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RoundRobinProvider<HttpProxy>(httpProxies)
 
-class RandomUserAgentProvider(private val userAgents: List<String>) : UserAgentProvider {
-    override fun select() = userAgents.random()
-    override fun hasAny() = userAgents.isNotEmpty()
-}
-
-class RoundRobinUserAgentProvider(private val userAgents: List<String>) : UserAgentProvider {
-    private val id = AtomicInteger()
-    override fun select() = userAgents[id.getAndIncrement() % userAgents.size]
-    override fun hasAny() = userAgents.isNotEmpty()
-}
+interface UserAgentProvider : Provider<String>
+class RandomUserAgentProvider(userAgents: List<String>) : UserAgentProvider, RandomProvider<String>(userAgents)
+class RoundRobinUserAgentProvider(userAgents: List<String>) : UserAgentProvider, RoundRobinProvider<String>(userAgents)

@@ -9,7 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class SeleniumHttpClient(private val webDriver: WebDriver, timeoutInSeconds: Int) : HttpClient {
+class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, private val timeoutInSeconds: Int) : HttpClient {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(SeleniumHttpClient::class.java)
     }
@@ -18,10 +18,9 @@ class SeleniumHttpClient(private val webDriver: WebDriver, timeoutInSeconds: Int
     override lateinit var proxyProvider: ProxyProvider
 
     var expectedConditions: Function<WebDriver, *>? = null
-    private val wait = WebDriverWait(webDriver, timeoutInSeconds.toLong())
 
     override fun dispatch(request: Request): Response {
-        // TODO: lock webDriver
+        val webDriver = webDriverProvider.select()
         logger.debug("[Request] handle ${request.url}")
         val options = webDriver.manage()
         for (entry in request.cookies) {
@@ -31,6 +30,7 @@ class SeleniumHttpClient(private val webDriver: WebDriver, timeoutInSeconds: Int
         webDriver[request.url]
 
         if (expectedConditions != null) {
+            val wait = WebDriverWait(webDriver, timeoutInSeconds.toLong())
             wait.until(expectedConditions)
         }
 
