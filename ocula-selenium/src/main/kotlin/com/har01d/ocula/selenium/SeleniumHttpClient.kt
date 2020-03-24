@@ -18,6 +18,7 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, priva
     override lateinit var proxyProvider: ProxyProvider
 
     var expectedConditions: Function<WebDriver, *>? = null
+    var seleniumAction: WebDriver.() -> Unit = {}
 
     override fun dispatch(request: Request): Response {
         val webDriver = webDriverProvider.select()
@@ -28,6 +29,8 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, priva
             options.addCookie(cookie)
         }
         webDriver[request.url]
+
+        webDriver.seleniumAction()
 
         if (expectedConditions != null) {
             val wait = WebDriverWait(webDriver, timeoutInSeconds.toLong())
