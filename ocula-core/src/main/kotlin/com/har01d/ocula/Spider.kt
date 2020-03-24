@@ -60,9 +60,7 @@ open class Spider<T>(private val parser: Parser<T>) {
 
     init {
         Configuration.setDefaults(object : Configuration.Defaults {
-            private val mapper = jacksonObjectMapper().apply {
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            }
+            private val mapper = jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             private val jsonProvider = JacksonJsonProvider(mapper)
             private val mappingProvider = JacksonMappingProvider(mapper)
 
@@ -164,7 +162,7 @@ open class Spider<T>(private val parser: Parser<T>) {
             }
         }
         if (resultHandlers.isEmpty()) {
-            resultHandlers += LogResultHandler
+            resultHandlers += ConsoleLogResultHandler
         }
         authHandler?.let {
             preHandlers += authHandler!!

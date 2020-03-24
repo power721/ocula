@@ -1,5 +1,6 @@
 package com.har01d.ocula.handler
 
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.kittinunf.fuel.httpDownload
 import com.har01d.ocula.http.Request
@@ -17,50 +18,72 @@ interface ResultHandler<in T> {
     fun handle(request: Request, response: Response, result: T)
 }
 
-object LogResultHandler : ResultHandler<Any?> {
+object ConsoleLogResultHandler : ResultHandler<Any?> {
     override fun handle(request: Request, response: Response, result: Any?) {
         println(request.url)
         println(Objects.toString(result))
     }
 }
 
-class TextFileResultHandler(private val file: String) : ResultHandler<Any?> {
-    override fun handle(request: Request, response: Response, result: Any?) {
-        BufferedWriter(FileWriter(file, true)).use { out -> out.write(Objects.toString(result)) }
+abstract class FileResultHandler<T>(val directory: String) : ResultHandler<T> {
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(FileResultHandler::class.java)
     }
-}
 
-class JsonFileResultHandler(private val file: String) : ResultHandler<Any?> {
-    private val mapper = jacksonObjectMapper()
-    override fun handle(request: Request, response: Response, result: Any?) {
-        BufferedWriter(FileWriter(file, true)).use { out -> out.write(mapper.writeValueAsString(result)) }
-    }
-}
+    private val logFile = File(directory, "files.log")
 
-class HtmlResultHandler(private val directory: String) : ResultHandler<Any?> {
     init {
         File(directory).mkdirs()
     }
 
-    override fun handle(request: Request, response: Response, result: Any?) {
-        val file = File(directory, request.url.md5() + ".html")
-        BufferedWriter(FileWriter(file)).use { out ->
-            out.write(response.body)
+    fun record(url: String, file: File) {
+        BufferedWriter(FileWriter(logFile, true)).use { out ->
+            out.write("$url    $file\n")
         }
     }
 }
 
-class ImageResultHandler(private val directory: String) : ResultHandler<Any?> {
+class TextFileResultHandler(directory: String) : FileResultHandler<Any?>(directory) {
+    override fun handle(request: Request, response: Response, result: Any?) {
+        val file = File(directory, request.url.md5() + ".txt")
+        BufferedWriter(FileWriter(file)).use { out ->
+            out.write(Objects.toString(result))
+            record(response.url, file)
+            logger.info("write result to file $file")
+        }
+    }
+}
+
+class JsonFileResultHandler(directory: String) : FileResultHandler<Any?>(directory) {
+    private val mapper = jacksonObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+    override fun handle(request: Request, response: Response, result: Any?) {
+        val file = File(directory, request.url.md5() + ".json")
+        BufferedWriter(FileWriter(file)).use { out ->
+            out.write(mapper.writeValueAsString(result))
+            record(response.url, file)
+            logger.info("write result to file $file")
+        }
+    }
+}
+
+class HtmlResultHandler(directory: String) : FileResultHandler<Any?>(directory) {
+    override fun handle(request: Request, response: Response, result: Any?) {
+        val file = File(directory, request.url.md5() + ".html")
+        BufferedWriter(FileWriter(file)).use { out ->
+            out.write(response.body)
+            record(response.url, file)
+            logger.info("write response to file $file")
+        }
+    }
+}
+
+class ImageResultHandler(directory: String) : FileResultHandler<Any?>(directory) {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(ImageResultHandler::class.java)
     }
 
     private val regex = ".*/(.*\\.(?:jpg|jpeg|png|webp|tiff|gif)).*".toRegex()
     var count = 0
-
-    init {
-        File(directory).mkdirs()
-    }
 
     override fun handle(request: Request, response: Response, result: Any?) {
         when (result) {
@@ -95,6 +118,7 @@ class ImageResultHandler(private val directory: String) : ResultHandler<Any?> {
         url.httpDownload().fileDestination { _, _ ->
             file.also { logger.info("download $url to $file") }
         }.response()
+        record(url, file)
         count++
         return true
     }

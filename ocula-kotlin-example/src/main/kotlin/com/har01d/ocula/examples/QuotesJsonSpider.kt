@@ -9,7 +9,7 @@ import com.jayway.jsonpath.TypeRef
 
 fun main() {
     val spider = Spider(QuotesJsonParser(), "http://quotes.toscrape.com/api/quotes")
-    spider.resultHandlers += JsonFileResultHandler("/tmp/quotes.json")
+    spider.resultHandlers += JsonFileResultHandler("/tmp/quotes/json")
     spider.run()
 }
 

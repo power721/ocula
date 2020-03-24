@@ -2,8 +2,8 @@ package com.har01d.ocula.examples
 
 import com.har01d.ocula.Spider
 import com.har01d.ocula.handler.AuthHandler
+import com.har01d.ocula.handler.ConsoleLogResultHandler
 import com.har01d.ocula.handler.HtmlResultHandler
-import com.har01d.ocula.handler.LogResultHandler
 import com.har01d.ocula.handler.TextFileResultHandler
 import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
@@ -16,9 +16,9 @@ fun main() {
     val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/").apply {
         authHandler = CsrfFormAuthHandler()
         listeners += LogListener
-        resultHandlers += LogResultHandler
-        resultHandlers += TextFileResultHandler("/tmp/quotes.txt")
-        resultHandlers += HtmlResultHandler("/tmp/quotes/humor")
+        resultHandlers += ConsoleLogResultHandler
+        resultHandlers += TextFileResultHandler("/tmp/quotes/text")
+        resultHandlers += HtmlResultHandler("/tmp/quotes/html")
     }
     spider.run()
 }
