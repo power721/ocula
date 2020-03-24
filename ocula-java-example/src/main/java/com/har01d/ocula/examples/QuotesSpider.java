@@ -17,7 +17,7 @@ public class QuotesSpider {
         Spider spider = new Spider<List<Quote>>(new QuotesParser(), "http://quotes.toscrape.com/tag/humor/");
         spider.getListeners().add(LogListener.INSTANCE);
         spider.getResultHandlers().add(ConsoleLogResultHandler.INSTANCE);
-        spider.getResultHandlers().add(new TextFileResultHandler("/tmp/quotes/text"));
+        spider.getResultHandlers().add(new TextFileResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/text"));
         spider.run();
     }
 }

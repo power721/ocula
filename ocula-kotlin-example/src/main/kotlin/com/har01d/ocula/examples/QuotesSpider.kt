@@ -17,8 +17,8 @@ fun main() {
         authHandler = CsrfFormAuthHandler()
         listeners += LogListener
         resultHandlers += ConsoleLogResultHandler
-        resultHandlers += TextFileResultHandler("/tmp/quotes/text")
-        resultHandlers += HtmlResultHandler("/tmp/quotes/html")
+        resultHandlers += TextFileResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/text")
+        resultHandlers += HtmlResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/html")
     }
     spider.run()
 }
