@@ -20,7 +20,7 @@ class QuotesJsonParser : AbstractParser<List<JsonQuote>>() {
 
         val hasNext: Boolean = response.jsonPath("$.has_next")
         if (hasNext) {
-            val page: Int = response.jsonPath("$.page")
+            val page: Int = response.jsonPath("$.page", Int::class.java)
             val next = "http://quotes.toscrape.com/api/quotes?page=" + (page + 1)
             spider.follow(response.url, next)
         } else {

@@ -22,7 +22,7 @@ class TiebaCrawler : AbstractCrawler() {
             spider.follow(response.url, Request(url, extra = mutableMapOf("name" to name)))
         }
 
-        val next = response.select("a.next").attr("href")
+        val next = response.select("a.next", "href")
         if (next.isNotEmpty()) {
             spider.crawl(response.url, next)
         } else {

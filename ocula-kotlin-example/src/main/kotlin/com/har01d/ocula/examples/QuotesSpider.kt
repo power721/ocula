@@ -33,7 +33,7 @@ class QuotesParser : AbstractParser<List<Quote>>() {
         }
 
         println(response.select("a[href=/logout]").text())
-        val next = response.select("li.next a").attr("href")
+        val next = response.select("li.next a", "href")
         if (!spider.follow(response.url, next)) {
             spider.finish()
         }
