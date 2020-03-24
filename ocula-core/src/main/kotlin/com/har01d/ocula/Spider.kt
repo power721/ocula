@@ -97,8 +97,10 @@ open class Spider<T>(private val parser: Parser<T>) {
     }
 
     fun downloadImages(directory: String) {
-        resultHandlers += ImageResultHandler(directory)
+        val handler = ImageResultHandler(directory)
+        resultHandlers += handler
         run()
+        logger.info("downloaded ${handler.count} images")
     }
 
     fun finish() {

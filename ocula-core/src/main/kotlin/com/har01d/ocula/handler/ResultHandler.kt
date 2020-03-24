@@ -5,6 +5,7 @@ import com.github.kittinunf.fuel.httpDownload
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.util.md5
+import com.har01d.ocula.util.normalizeUrl
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedWriter
@@ -55,6 +56,7 @@ class ImageResultHandler(private val directory: String) : ResultHandler<Any?> {
     }
 
     private val regex = ".*/(.*\\.(?:jpg|jpeg|png|webp|tiff|gif)).*".toRegex()
+    var count = 0
 
     init {
         File(directory).mkdirs()
@@ -62,11 +64,15 @@ class ImageResultHandler(private val directory: String) : ResultHandler<Any?> {
 
     override fun handle(request: Request, response: Response, result: Any?) {
         when (result) {
-            is String -> download(fixUrl(response.url, result))
+            is String -> if (!download(normalizeUrl(response.url, result))) {
+                logger.warn("ignore $result")
+            }
             is Collection<*> -> {
                 for (item in result) {
                     if (item is String) {
-                        download(fixUrl(response.url, item))
+                        if (!download(normalizeUrl(response.url, item))) {
+                            logger.warn("ignore $item")
+                        }
                     } else {
                         logger.warn("ignore $item")
                     }
@@ -76,16 +82,20 @@ class ImageResultHandler(private val directory: String) : ResultHandler<Any?> {
         }
     }
 
-    private fun download(url: String) {
+    private fun download(url: String?): Boolean {
+        if (url == null) return false
         val name = regex.find(url)?.let {
             it.groupValues[1]
-        } ?: return
+        } ?: return false
         val file = File(directory, name)
-        if (file.exists()) return
+        if (file.exists()) {
+            logger.info("file $file exists")
+            return false
+        }
         url.httpDownload().fileDestination { _, _ ->
             file.also { logger.info("download $url to $file") }
         }.response()
+        count++
+        return true
     }
-
-    private fun fixUrl(refer: String, url: String): String = if (url.startsWith("http")) url else if (url.startsWith("//")) "https:$url" else "$refer/$url"
 }
