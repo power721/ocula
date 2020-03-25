@@ -15,14 +15,10 @@ fun main() {
 class DoubanBookCrawler : AbstractCrawler() {
     override fun handle(request: Request, response: Response) {
         response.select("#subject_list .subject-item .info h2 a").forEach {
-            spider.follow(response.url, it.attr("href"))
+            follow(response, it.attr("href"))
         }
-        val next = response.select(".next a", "href")
-        if (next.isNotEmpty()) {
-            spider.crawl(response.url, next)
-        } else {
-            spider.finish()
-        }
+
+        crawl(response, response.select(".next a", "href"))
     }
 }
 

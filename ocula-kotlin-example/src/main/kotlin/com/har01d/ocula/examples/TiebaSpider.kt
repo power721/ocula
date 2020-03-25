@@ -19,15 +19,10 @@ class TiebaCrawler : AbstractCrawler() {
         for (element in elements) {
             val name = element.select(".ba_name").text()
             val url = element.select("a").first().attr("href")
-            spider.follow(response.url, Request(url, extra = mutableMapOf("name" to name)))
+            follow(response, Request(url, extra = mutableMapOf("name" to name)))
         }
 
-        val next = response.select("a.next", "href")
-        if (next.isNotEmpty()) {
-            spider.crawl(response.url, next)
-        } else {
-            spider.finish()
-        }
+        crawl(response, response.select("a.next", "href"))
     }
 }
 
