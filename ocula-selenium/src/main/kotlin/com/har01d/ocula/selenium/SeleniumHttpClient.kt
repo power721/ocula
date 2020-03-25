@@ -1,16 +1,13 @@
 package com.har01d.ocula.selenium
 
-import com.google.common.base.Function
 import com.har01d.ocula.http.*
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
 
-class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, private val timeoutInSeconds: Int) : HttpClient {
+class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : HttpClient {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(SeleniumHttpClient::class.java)
     }
@@ -19,8 +16,7 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, priva
     override lateinit var proxyProvider: ProxyProvider
     override lateinit var charset: Charset
 
-    var expectedConditions: Function<WebDriver, *>? = null
-    var seleniumAction: WebDriver.() -> Unit = {}
+    var actionHandler: SeleniumActionHandler? = null
 
     override fun dispatch(request: Request): Response {
         val webDriver = webDriverProvider.select()
@@ -32,12 +28,7 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, priva
         }
         webDriver[request.url]
 
-        webDriver.seleniumAction()
-
-        if (expectedConditions != null) {
-            val wait = WebDriverWait(webDriver, timeoutInSeconds.toLong())
-            wait.until(expectedConditions)
-        }
+        actionHandler?.handle(request, webDriver)
 
         val webElement = webDriver.findElement(By.xpath("/html"))
         val content = webElement.getAttribute("outerHTML")

@@ -1,25 +1,10 @@
 package com.har01d.ocula.examples
 
+import com.har01d.ocula.selenium.LoadAll
 import com.har01d.ocula.selenium.SimpleSeleniumSpider
 import com.har01d.ocula.util.normalizeUrl
-import org.openqa.selenium.JavascriptExecutor
-import org.openqa.selenium.WebDriver
 
 fun main() {
-    val loadAll: WebDriver.() -> Unit = {
-        val executor = this as JavascriptExecutor
-        var height = executor.executeScript("return document.body.scrollHeight")
-        while (true) {
-            executor.executeScript("window.scrollTo(0, document.body.scrollHeight)")
-            Thread.sleep(1000L)
-            val newHeight = executor.executeScript("return document.body.scrollHeight")
-            if (newHeight == height) {
-                break
-            }
-            height = newHeight
-        }
-    }
-
     SimpleSeleniumSpider("https://www.zhihu.com/search?type=content&q=Java") { _, res ->
         res.select(".SearchResult-Card .List-item").map {
             val title = it.select(".ContentItem-title a").text()
@@ -36,7 +21,7 @@ fun main() {
             println(it.size)
         }
     }.apply {
-        seleniumAction = loadAll
+        actionHandler = LoadAll()
     }.run()
 }
 

@@ -21,14 +21,14 @@ abstract class AbstractCrawler : Crawler {
     }
 
     fun crawl(response: Response, next: String) {
-        if (next.isEmpty()) {
+        if (!spider.crawl(response.url, next)) {
             spider.finish()
-        } else {
-            spider.crawl(response.url, next)
         }
     }
 
-    fun crawl(response: Response, request: Request) {
-        spider.crawl(response.url, request)
+    fun crawl(response: Response, next: Request) {
+        if (!spider.crawl(response.url, next)) {
+            spider.finish()
+        }
     }
 }
