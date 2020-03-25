@@ -4,9 +4,9 @@ import com.har01d.ocula.Spider
 import com.har01d.ocula.crawler.AbstractCrawler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
-import com.har01d.ocula.lines
 import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.toDouble
+import com.har01d.ocula.selector.lines
+import com.har01d.ocula.selector.toDouble
 
 fun main() {
     Spider(DoubanBookCrawler(), DoubanBookParser(), "https://book.douban.com/tag/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C").run()

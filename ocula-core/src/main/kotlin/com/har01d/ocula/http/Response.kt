@@ -1,6 +1,6 @@
 package com.har01d.ocula.http
 
-import com.har01d.ocula.Selector
+import com.har01d.ocula.selector.Selector
 import java.net.HttpCookie
 
 data class Response(

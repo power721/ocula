@@ -1,4 +1,4 @@
-package com.har01d.ocula
+package com.har01d.ocula.selector
 
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath
@@ -37,20 +37,7 @@ open class Selector(private val body: String) {
 
     fun select(cssQuery: String): Elements = document.select(cssQuery)
 
-    fun select(cssQuery: String, attr: String): String {
-        val elements = document.select(cssQuery)
-        val value = elements.attr(attr)
-        if (value.isEmpty()) {
-            return when (attr) {
-                "text" -> elements.text()
-                "val", "value" -> elements.`val`()
-                "html" -> elements.html()
-                "outerHtml" -> elements.outerHtml()
-                else -> ""
-            }
-        }
-        return value
-    }
+    fun select(cssQuery: String, attr: String): String = document.select(cssQuery).attr(attr)
 
     fun <T> jsonPath(path: String, clazz: Class<T>): T = json.read(path, clazz)
 
@@ -68,6 +55,10 @@ open class Selector(private val body: String) {
         return regex.find(body)?.groupValues?.get(group)
     }
 }
+
+operator fun Element.get(key: String): String = attr(key)
+
+operator fun Elements.get(key: String): String = attr(key)
 
 fun Element.toDouble(): Double? {
     val text = text().trim()

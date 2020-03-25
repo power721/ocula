@@ -5,6 +5,7 @@ import com.har01d.ocula.crawler.AbstractCrawler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.AbstractParser
+import com.har01d.ocula.selector.get
 
 fun main() {
     Spider(GiteeCrawler(), GiteeParser(), "https://gitee.com/explore/spider?lang=Java").run()
@@ -14,7 +15,7 @@ fun main() {
 class GiteeCrawler : AbstractCrawler() {
     override fun handle(request: Request, response: Response) {
         response.select(".items .item a.title").forEach {
-            follow(response, it.attr("href"))
+            follow(response, it["href"])
         }
 
         crawl(response, response.select("a[rel=next]", "href"))
@@ -24,7 +25,7 @@ class GiteeCrawler : AbstractCrawler() {
 class GiteeSearchCrawler : AbstractCrawler() {
     override fun handle(request: Request, response: Response) {
         response.select("#hits-list .item .header .title a").forEach {
-            follow(response, it.attr("href"))
+            follow(response, it["href"])
         }
 
         crawl(response, response.select(".next a", "href"))
@@ -33,10 +34,10 @@ class GiteeSearchCrawler : AbstractCrawler() {
 
 class GiteeParser : AbstractParser<Repo>() {
     override fun parse(request: Request, response: Response): Repo {
-        val name = response.select(".project-title a.repository", "text")
-        val author = response.select(".project-title a.author", "text")
-        val language = response.select(".project-badges a.proj-language", "text")
-        val license = response.select(".project-badges a.license", "text")
+        val name = response.select(".project-title a.repository").text()
+        val author = response.select(".project-title a.author").text()
+        val language = response.select(".project-badges a.proj-language").text()
+        val license = response.select(".project-badges a.license").text()
         val watched = response.select(".watch-container a.action-social-count", "title").toInt()
         val stared = response.select(".star-container a.action-social-count", "title").toInt()
         val forked = response.select(".fork-container a.action-social-count", "title").toInt()
