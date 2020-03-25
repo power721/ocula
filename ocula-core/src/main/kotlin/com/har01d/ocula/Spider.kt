@@ -21,6 +21,7 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.charset.Charset
 import java.util.*
 
 
@@ -45,6 +46,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = InMemoryRequestQueue()
     var crawler: Crawler? = null
+    var charset: Charset = Charsets.UTF_8
     var interval: Long = 500L
     var concurrency: Int = 0
     private var finished = false
@@ -171,6 +173,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         httpClient.userAgentProvider = userAgentProvider!!
         proxyProvider = proxyProvider ?: RoundRobinProxyProvider(httpProxies)
         httpClient.proxyProvider = proxyProvider!!
+        httpClient.charset = charset
     }
 
     private fun enqueue(queue: RequestQueue) {

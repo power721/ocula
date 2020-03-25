@@ -8,6 +8,7 @@ import org.openqa.selenium.WebDriver
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.charset.Charset
 
 class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, private val timeoutInSeconds: Int) : HttpClient {
     companion object {
@@ -16,6 +17,7 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider, priva
 
     override lateinit var userAgentProvider: UserAgentProvider
     override lateinit var proxyProvider: ProxyProvider
+    override lateinit var charset: Charset
 
     var expectedConditions: Function<WebDriver, *>? = null
     var seleniumAction: WebDriver.() -> Unit = {}

@@ -7,10 +7,12 @@ import com.har01d.ocula.util.generateId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.HttpCookie
+import java.nio.charset.Charset
 
 interface HttpClient {
     var userAgentProvider: UserAgentProvider
     var proxyProvider: ProxyProvider
+    var charset: Charset
     fun dispatch(request: Request): Response
 }
 
@@ -21,6 +23,8 @@ class FuelHttpClient : HttpClient {
 
     override lateinit var userAgentProvider: UserAgentProvider
     override lateinit var proxyProvider: ProxyProvider
+    override lateinit var charset: Charset
+    // TODO: auto detect html charset
 
     override fun dispatch(request: Request): Response {
         val id = generateId(6)
@@ -47,7 +51,7 @@ class FuelHttpClient : HttpClient {
         if (userAgentProvider.hasAny()) {
             req.header("User-Agent", userAgentProvider.select())
         }
-        val (_, response, result) = req.header(request.headers.toMap()).responseString()
+        val (_, response, result) = req.header(request.headers.toMap()).responseString(request.charset ?: charset)
         when (result) {
             is Result.Failure -> throw result.getException()
             is Result.Success -> {
