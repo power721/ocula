@@ -22,6 +22,11 @@ open class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
         requests += urls.map { Request(it) }
     }
 
+    override fun prepare() {
+        concurrency = 1
+        super.prepare()
+    }
+
     override fun preHandle() {
         val size = if (httpProxies.size > 0) httpProxies.size else 1
         webDriverProvider = webDriverProvider
@@ -37,9 +42,10 @@ open class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
         super.postHandle()
     }
 
-    fun phantomjs(execPath: String) {
+    fun phantomjs(execPath: String): SeleniumSpider<T> {
         driverType = DriverType.PHANTOMJS
         phantomjsExecPath = execPath
+        return this
     }
 }
 

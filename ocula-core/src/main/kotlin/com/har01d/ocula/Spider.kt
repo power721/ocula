@@ -149,13 +149,13 @@ open class Spider<T>(private val parser: Parser<T>) {
         listeners.forEach { it.onFinish() }
     }
 
-    private fun validate() {
+    open fun validate() {
         if (requests.isEmpty()) {
             throw IllegalStateException("start url is required")
         }
     }
 
-    private fun prepare() {
+    open fun prepare() {
         if (concurrency == 0) {
             concurrency = if (crawler != null) {
                 Runtime.getRuntime().availableProcessors()
@@ -176,7 +176,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         httpClient.charset = charset
     }
 
-    private fun enqueue(queue: RequestQueue) {
+    open fun enqueue(queue: RequestQueue) {
         requests.forEach {
             queue.push(it)
         }
@@ -210,7 +210,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         }
     }
 
-    private fun setHeaders(request: Request, referer: String?) {
+    open fun setHeaders(request: Request, referer: String?) {
         if (referer != null && !request.headers.containsKey("Referer")) {
             request.headers["Referer"] = listOf(referer)
         }
@@ -224,33 +224,35 @@ open class Spider<T>(private val parser: Parser<T>) {
     private suspend fun crawl(scope: CoroutineScope) {
         var referer: String? = null
         while (scope.isActive) {
-            val request = queueCrawler.take()
-            try {
-                if (!dedupHandler.handle(request)) {
-                    continue
-                }
-                setHeaders(request, referer)
-                val response = try {
-                    dispatch(request)
-                } catch (e: Exception) {
-                    listeners.forEach { it.onDownloadFailed(request, e) }
-                    throw e
-                }
-                referer = request.url
-                listeners.forEach { it.onDownloadSuccess(request, response) }
-
+            val request = queueCrawler.poll(1000L)
+            if (request != null) {
                 try {
-                    crawler!!.handle(request, response)
-                } catch (e: Exception) {
-                    listeners.forEach { it.onCrawlFailed(request, e) }
-                    throw e
-                }
-                listeners.forEach { it.onCrawlSuccess(request, response) }
+                    if (!dedupHandler.handle(request)) {
+                        continue
+                    }
+                    setHeaders(request, referer)
+                    val response = try {
+                        dispatch(request)
+                    } catch (e: Exception) {
+                        listeners.forEach { it.onDownloadFailed(request, e) }
+                        throw e
+                    }
+                    referer = request.url
+                    listeners.forEach { it.onDownloadSuccess(request, response) }
 
-                delay(interval)
-            } catch (e: Exception) {
-                listeners.forEach { it.onError(e) }
-                logger.warn("Crawl pages failed", e)
+                    try {
+                        crawler!!.handle(request, response)
+                    } catch (e: Exception) {
+                        listeners.forEach { it.onCrawlFailed(request, e) }
+                        throw e
+                    }
+                    listeners.forEach { it.onCrawlSuccess(request, response) }
+
+                    delay(interval)
+                } catch (e: Exception) {
+                    listeners.forEach { it.onError(e) }
+                    logger.warn("Crawl pages failed", e)
+                }
             }
 
             if (finished && queueCrawler.isEmpty()) {

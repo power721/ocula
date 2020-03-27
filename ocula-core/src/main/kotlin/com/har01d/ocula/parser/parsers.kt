@@ -13,6 +13,13 @@ abstract class AbstractParser<T> : Parser<T> {
     override lateinit var spider: Spider<*>
 }
 
+class NoopParser : AbstractParser<String>() {
+    override fun parse(request: Request, response: Response): String {
+        spider.finish()
+        return ""
+    }
+}
+
 class SimpleParser<T>(val block: (request: Request, response: Response) -> T) : AbstractParser<T>() {
     override fun parse(request: Request, response: Response) = block(request, response).also { spider.finish() }
 }
