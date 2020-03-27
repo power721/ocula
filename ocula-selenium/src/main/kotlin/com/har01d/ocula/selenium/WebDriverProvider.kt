@@ -1,5 +1,6 @@
 package com.har01d.ocula.selenium
 
+import com.har01d.ocula.http.EmptyProxyProvider
 import com.har01d.ocula.http.Provider
 import com.har01d.ocula.http.ProxyProvider
 import com.har01d.ocula.http.RoundRobinProvider
@@ -16,8 +17,8 @@ interface WebDriverProvider : Provider<WebDriver> {
 }
 
 class DefaultWebDriverProvider(
-        size: Int,
-        private val proxyProvider: ProxyProvider,
+        size: Int = 1,
+        private val proxyProvider: ProxyProvider = EmptyProxyProvider,
         private val driverType: DriverType = DriverType.CHROME,
         private val phantomjsExecPath: String? = null,
         private val drivers: MutableList<WebDriver> = mutableListOf()

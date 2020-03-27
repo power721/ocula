@@ -31,6 +31,14 @@ abstract class RoundRobinProvider<T>(private val collection: List<T>) {
 }
 
 interface ProxyProvider : Provider<HttpProxy>
+object EmptyProxyProvider : ProxyProvider {
+    override fun select(): HttpProxy {
+        throw NotImplementedError()
+    }
+
+    override fun hasAny() = false
+}
+
 class RandomProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RandomProvider<HttpProxy>(httpProxies)
 class RoundRobinProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RoundRobinProvider<HttpProxy>(httpProxies)
 
