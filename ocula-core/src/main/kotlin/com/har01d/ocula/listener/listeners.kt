@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 
 interface Listener<in T> {
     fun onStart()
+    fun onSkip(request: Request)
     fun onDownloadSuccess(request: Request, response: Response)
     fun onDownloadFailed(request: Request, e: Exception)
     fun onCrawlSuccess(request: Request, response: Response)
@@ -19,6 +20,7 @@ interface Listener<in T> {
 
 abstract class AbstractListener<T> : Listener<T> {
     override fun onStart() {}
+    override fun onSkip(request: Request) {}
 
     override fun onDownloadSuccess(request: Request, response: Response) {}
 
@@ -39,6 +41,7 @@ abstract class AbstractListener<T> : Listener<T> {
 
 class StatisticListener : AbstractListener<Any?>() {
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
+    private var skipped = 0
     private var downloaded = 0
     private var crawled = 0
     private var parsed = 0
@@ -47,6 +50,10 @@ class StatisticListener : AbstractListener<Any?>() {
 
     override fun onStart() {
         startTime = System.currentTimeMillis()
+    }
+
+    override fun onSkip(request: Request) {
+        skipped++
     }
 
     override fun onDownloadSuccess(request: Request, response: Response) {
@@ -67,15 +74,20 @@ class StatisticListener : AbstractListener<Any?>() {
 
     override fun onFinish() {
         val time = (System.currentTimeMillis() - startTime) / 1000
-        logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  Errors: $errors  Time: ${time}s")
+        logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
+                "Skipped pages: $skipped  Errors: $errors  Time: ${time}s")
     }
 }
 
-object LogListener : Listener<Any?> {
+object LogListener : AbstractListener<Any?>() {
     private val logger: Logger = LoggerFactory.getLogger(LogListener::class.java)
 
     override fun onStart() {
         logger.info("Spider start")
+    }
+
+    override fun onSkip(request: Request) {
+        logger.info("Skip disallowed url {}", request.url)
     }
 
     override fun onDownloadSuccess(request: Request, response: Response) {

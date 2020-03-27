@@ -37,6 +37,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     val httpProxies = mutableListOf<HttpProxy>()
     var proxyProvider: ProxyProvider? = null
     var authHandler: AuthHandler? = null
+    var robotsHandler: RobotsHandler = NoopRobotsHandler
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
@@ -166,6 +167,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
         }
+        robotsHandler.init(requests)
         authHandler?.let {
             preHandlers += authHandler!!
         }
@@ -228,6 +230,7 @@ open class Spider<T>(private val parser: Parser<T>) {
             if (request != null) {
                 try {
                     if (!dedupHandler.handle(request)) {
+                        logger.debug("Ignore {}", request.url)
                         continue
                     }
                     setHeaders(request, referer)
@@ -267,7 +270,14 @@ open class Spider<T>(private val parser: Parser<T>) {
             val request = queueParser.poll(1000L)
             if (request != null) {
                 try {
+                    if (!robotsHandler.handle(request)) {
+                        listeners.forEach { it.onSkip(request) }
+                        logger.debug("Skip {}", request.url)
+                        continue
+                    }
                     if (!dedupHandler.handle(request)) {
+                        // TODO: before enqueue
+                        logger.debug("Ignore {}", request.url)
                         continue
                     }
                     setHeaders(request, referer)

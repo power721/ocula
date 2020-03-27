@@ -11,6 +11,14 @@ interface Parser<out T> {
 
 abstract class AbstractParser<T> : Parser<T> {
     override lateinit var spider: Spider<*>
+
+    fun follow(response: Response, href: String) {
+        spider.follow(response.url, href)
+    }
+
+    fun follow(response: Response, request: Request) {
+        spider.follow(response.url, request)
+    }
 }
 
 class NoopParser : AbstractParser<String>() {
