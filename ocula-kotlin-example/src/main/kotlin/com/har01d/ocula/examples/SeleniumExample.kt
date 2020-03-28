@@ -8,7 +8,7 @@ import com.har01d.ocula.selenium.SeleniumSpider
 
 fun main() {
     SeleniumSpider(CourseCrawler(), CourseParser(), "https://www.icourse163.org/category/historiography")
-            .phantomjs("/opt/phantomjs/bin/phantomjs")
+            //.phantomjs("/opt/phantomjs/bin/phantomjs")
             .run()
 }
 

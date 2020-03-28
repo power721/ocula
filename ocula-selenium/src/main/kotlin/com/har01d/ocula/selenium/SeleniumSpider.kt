@@ -53,6 +53,9 @@ class SimpleSeleniumSpider<T>(vararg url: String, parse: (request: Request, resp
 
 enum class DriverType {
     CHROME,
+    EDGE,
     FIREFOX,
+    OPERA,
+    SAFARI,
     PHANTOMJS
 }
