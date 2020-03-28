@@ -1,9 +1,7 @@
 package com.har01d.ocula.selenium
 
 import com.har01d.ocula.http.EmptyProxyProvider
-import com.har01d.ocula.http.Provider
 import com.har01d.ocula.http.ProxyProvider
-import com.har01d.ocula.http.RoundRobinProvider
 import org.openqa.selenium.MutableCapabilities
 import org.openqa.selenium.Proxy
 import org.openqa.selenium.WebDriver
@@ -21,8 +19,12 @@ import org.openqa.selenium.remote.CapabilityType
 import org.openqa.selenium.remote.DesiredCapabilities
 import org.openqa.selenium.safari.SafariDriver
 import org.openqa.selenium.safari.SafariOptions
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 
-interface WebDriverProvider : Provider<WebDriver> {
+interface WebDriverProvider {
+    fun take(): WebDriver
+    fun release(driver: WebDriver)
     fun clean()
 }
 
@@ -30,14 +32,22 @@ class DefaultWebDriverProvider(
         size: Int = 1,
         private val proxyProvider: ProxyProvider = EmptyProxyProvider,
         private val driverType: DriverType = DriverType.CHROME,
-        private val phantomjsExecPath: String? = null,
-        private val drivers: MutableList<WebDriver> = mutableListOf()
-) : WebDriverProvider, RoundRobinProvider<WebDriver>(drivers) {
+        private val phantomjsExecPath: String? = null
+) : WebDriverProvider {
+    private val drivers: MutableList<WebDriver> = mutableListOf()
+    private val queue: BlockingQueue<WebDriver> = ArrayBlockingQueue(size)
+
     init {
         for (i in 1..size) {
-            drivers += driver()
+            val driver = driver()
+            drivers += driver
+            queue.put(driver)
         }
     }
+
+    override fun take(): WebDriver = queue.take()
+
+    override fun release(driver: WebDriver) = queue.put(driver)
 
     override fun clean() {
         drivers.forEach { it.quit() }
@@ -62,18 +72,17 @@ class DefaultWebDriverProvider(
         }
 
         cap.setCapability(CapabilityType.SUPPORTS_JAVASCRIPT, true)
+        cap.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true)
 
         when (driverType) {
             DriverType.CHROME -> {
                 val options = cap as ChromeOptions
                 options.setHeadless(true)
-                options.setAcceptInsecureCerts(true)
                 return ChromeDriver(options)
             }
             DriverType.FIREFOX -> {
                 val options = cap as FirefoxOptions
                 options.setHeadless(true)
-                options.setAcceptInsecureCerts(true)
                 return FirefoxDriver(options)
             }
             DriverType.EDGE -> {

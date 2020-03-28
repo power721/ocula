@@ -19,25 +19,29 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Htt
     var actionHandler: SeleniumActionHandler? = null
 
     override fun dispatch(request: Request): Response {
-        val webDriver = webDriverProvider.select()
+        val webDriver = webDriverProvider.take()
         logger.debug("[Request] handle ${request.url}")
-        val options = webDriver.manage()
-        for (entry in request.cookies) {
-            val cookie = Cookie(entry.name, entry.value)
-            options.addCookie(cookie)
+        try {
+            val options = webDriver.manage()
+            for (entry in request.cookies) {
+                val cookie = Cookie(entry.name, entry.value)
+                options.addCookie(cookie)
+            }
+            webDriver[request.url]
+
+            actionHandler?.handle(request, webDriver)
+
+            val webElement = webDriver.findElement(By.xpath("/html"))
+            val content = webElement.getAttribute("outerHTML")
+            options.deleteAllCookies()
+            return Response(
+                    request.url,
+                    content,
+                    200,
+                    contentLength = content.length.toLong()
+            )
+        } finally {
+            webDriverProvider.release(webDriver)
         }
-        webDriver[request.url]
-
-        actionHandler?.handle(request, webDriver)
-
-        val webElement = webDriver.findElement(By.xpath("/html"))
-        val content = webElement.getAttribute("outerHTML")
-        options.deleteAllCookies()
-        return Response(
-                request.url,
-                content,
-                200,
-                contentLength = content.length.toLong()
-        )
     }
 }
