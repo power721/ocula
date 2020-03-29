@@ -102,38 +102,12 @@ open class Spider<T>(private val parser: Parser<T>) {
         finished = true
     }
 
-    fun crawl(refer: String, vararg urls: String) = enqueue(queueCrawler, refer, *urls)
-
-    fun crawl(refer: String, vararg requests: Request) = enqueue(queueCrawler, refer, *requests)
-
     fun follow(refer: String, vararg urls: String) = enqueue(queueParser, refer, *urls)
 
     fun follow(refer: String, vararg requests: Request) = enqueue(queueParser, refer, *requests)
 
     open fun enqueue(queue: RequestQueue, refer: String, vararg urls: String): Boolean {
-        var success = false
-        for (url in urls) {
-            if (!validateUrl(url)) {
-                continue
-            }
-            val uri = normalizeUrl(refer, url)
-            if (uri != null) {
-                val headers: MutableMap<String, Collection<String>> = mutableMapOf("Referer" to listOf(refer))
-                val req = Request(uri, headers = headers)
-                if (!robotsHandler.handle(req)) {
-                    listeners.forEach { it.onSkip(req) }
-                    logger.debug("Skip {}", req.url)
-                    continue
-                }
-                if (!dedupHandler.handle(req)) {
-                    logger.debug("Ignore {}", req.url)
-                    continue
-                }
-                queue.push(req)
-                success = true
-            }
-        }
-        return success
+        return enqueue(queue, refer, *urls.map { Request(it) }.toTypedArray())
     }
 
     open fun enqueue(queue: RequestQueue, refer: String, vararg requests: Request): Boolean {
@@ -157,6 +131,7 @@ open class Spider<T>(private val parser: Parser<T>) {
                     continue
                 }
                 queue.push(req)
+                logger.debug("Enqueue {}", req.url)
                 success = true
             }
         }
@@ -320,6 +295,10 @@ open class Spider<T>(private val parser: Parser<T>) {
                     }
                     listeners.forEach { it.onCrawlSuccess(request, response) }
 
+                    if (!enqueue(queueCrawler, response.url, *crawler!!.candidates.toTypedArray())) {
+                        finish()
+                    }
+
                     delay(interval)
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
@@ -356,6 +335,8 @@ open class Spider<T>(private val parser: Parser<T>) {
                         throw e
                     }
                     listeners.forEach { it.onParseSuccess(request, response, result) }
+
+                    follow(response.url, *parser.candidates.toTypedArray())
 
                     resultHandlers.forEach {
                         try {

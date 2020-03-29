@@ -8,19 +8,21 @@ import com.har01d.ocula.http.Response
 interface Parser<out T> {
     var spider: Spider<*>
     var httpClient: HttpClient?
+    val candidates: List<Request>
     fun parse(request: Request, response: Response): T
 }
 
 abstract class AbstractParser<T> : Parser<T> {
     override lateinit var spider: Spider<*>
     override var httpClient: HttpClient? = null
+    override val candidates: MutableList<Request> = mutableListOf()
 
-    fun follow(response: Response, href: String) {
-        spider.follow(response.url, href)
+    fun follow(next: String) {
+        candidates += Request(next)
     }
 
-    fun follow(response: Response, request: Request) {
-        spider.follow(response.url, request)
+    fun follow(next: Request) {
+        candidates += next
     }
 }
 

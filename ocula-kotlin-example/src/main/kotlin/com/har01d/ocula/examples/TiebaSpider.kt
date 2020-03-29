@@ -21,7 +21,7 @@ class TiebaCrawler : AbstractCrawler() {
             follow(response, Request(url, extra = mutableMapOf("name" to name)))
         }
 
-        crawl(response, response.select("a.next", "href"))
+        crawl(response.select("a.next", "href"))
     }
 }
 

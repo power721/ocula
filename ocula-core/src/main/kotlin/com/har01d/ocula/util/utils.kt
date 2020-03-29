@@ -58,6 +58,14 @@ fun normalizeUrl(refer: String, url: String) =
             null
         }
 
+fun String.path(): String {
+    val index = indexOfAny(charArrayOf('?', '#'))
+    if (index > 0) {
+        return substring(0, index)
+    }
+    return this
+}
+
 fun String.md5(): String {
     val bytes = MessageDigest.getInstance("MD5").digest(this.toByteArray())
     return bytes.toHex()

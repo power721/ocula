@@ -18,7 +18,7 @@ class GiteeCrawler : AbstractCrawler() {
             follow(response, it["href"])
         }
 
-        crawl(response, response.select("a[rel=next]", "href"))
+        crawl(response.select("a[rel=next]", "href"))
     }
 }
 
@@ -28,7 +28,7 @@ class GiteeSearchCrawler : AbstractCrawler() {
             follow(response, it["href"])
         }
 
-        crawl(response, response.select(".next a", "href"))
+        crawl(response.select(".next a", "href"))
     }
 }
 
