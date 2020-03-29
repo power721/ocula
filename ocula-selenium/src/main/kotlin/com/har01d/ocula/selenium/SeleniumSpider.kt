@@ -27,14 +27,14 @@ open class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
         super.prepare()
     }
 
-    override fun preHandle() {
+    override fun initHttpClient() {
         val size = if (httpProxies.size > 0) httpProxies.size else 1
         webDriverProvider = webDriverProvider
                 ?: DefaultWebDriverProvider(size, proxyProvider!!, driverType, phantomjsExecPath)
         val httpClient = SeleniumHttpClient(webDriverProvider!!)
         httpClient.actionHandler = actionHandler
         this.httpClient = httpClient
-        super.preHandle()
+        super.initHttpClient()
     }
 
     override fun postHandle() {

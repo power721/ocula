@@ -1,20 +1,17 @@
 package com.har01d.ocula.selenium
 
-import com.har01d.ocula.http.*
+import com.har01d.ocula.http.AbstractHttpClient
+import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.Response
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.charset.Charset
 
-class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : HttpClient {
+class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : AbstractHttpClient() {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(SeleniumHttpClient::class.java)
     }
-
-    override lateinit var userAgentProvider: UserAgentProvider
-    override lateinit var proxyProvider: ProxyProvider
-    override lateinit var charset: Charset
 
     var actionHandler: SeleniumActionHandler? = null
 

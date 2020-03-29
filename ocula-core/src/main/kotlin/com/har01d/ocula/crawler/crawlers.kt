@@ -1,16 +1,19 @@
 package com.har01d.ocula.crawler
 
 import com.har01d.ocula.Spider
+import com.har01d.ocula.http.HttpClient
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 
 interface Crawler {
     var spider: Spider<*>
+    var httpClient: HttpClient?
     fun handle(request: Request, response: Response)
 }
 
 abstract class AbstractCrawler : Crawler {
     override lateinit var spider: Spider<*>
+    override var httpClient: HttpClient? = null
 
     fun follow(response: Response, href: String) {
         spider.follow(response.url, href)

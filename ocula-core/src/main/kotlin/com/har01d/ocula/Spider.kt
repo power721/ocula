@@ -42,7 +42,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener<T>>(StatisticListener())
-    var httpClient: HttpClient = FuelHttpClient()
+    var httpClient: HttpClient? = null
     var dedupHandler: DedupHandler = HashSetDedupHandler()
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = InMemoryRequestQueue()
@@ -64,16 +64,10 @@ open class Spider<T>(private val parser: Parser<T>) {
     init {
         Configuration.setDefaults(object : Configuration.Defaults {
             private val mapper = jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            private val jsonProvider = JacksonJsonProvider(mapper)
-            private val mappingProvider = JacksonMappingProvider(mapper)
 
-            override fun jsonProvider() = jsonProvider
-
-            override fun mappingProvider() = mappingProvider
-
-            override fun options(): Set<Option> {
-                return EnumSet.noneOf(Option::class.java)
-            }
+            override fun jsonProvider() = JacksonJsonProvider(mapper)
+            override fun mappingProvider() = JacksonMappingProvider(mapper)
+            override fun options() = EnumSet.noneOf(Option::class.java)
         })
     }
 
@@ -169,6 +163,12 @@ open class Spider<T>(private val parser: Parser<T>) {
         return success
     }
 
+    open fun enqueue(queue: RequestQueue) {
+        requests.forEach {
+            queue.push(it)
+        }
+    }
+
     open fun validateUrl(url: String): Boolean {
         if (url.isBlank() || url == "#" || url.startsWith("javascript:")) {
             return false
@@ -176,7 +176,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         return true
     }
 
-    fun dispatch(request: Request) = httpClient.dispatch(request)
+    fun dispatch(request: Request) = httpClient!!.dispatch(request)
 
     fun run() = runBlocking {
         validate()
@@ -232,16 +232,29 @@ open class Spider<T>(private val parser: Parser<T>) {
             preHandlers += authHandler!!
         }
         userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
-        httpClient.userAgentProvider = userAgentProvider!!
         proxyProvider = proxyProvider ?: RoundRobinProxyProvider(httpProxies)
-        httpClient.proxyProvider = proxyProvider!!
-        httpClient.charset = charset
+        initHttpClient()
     }
 
-    open fun enqueue(queue: RequestQueue) {
-        requests.forEach {
-            queue.push(it)
+    open fun initHttpClient() {
+        httpClient = httpClient ?: FuelHttpClient()
+        crawler?.let {
+            if (crawler!!.httpClient == null) {
+                crawler!!.httpClient = httpClient
+            }
+            val client = crawler!!.httpClient!!
+            client.userAgentProvider = userAgentProvider!!
+            client.proxyProvider = proxyProvider!!
+            client.charset = charset
         }
+
+        if (parser.httpClient == null) {
+            parser.httpClient = httpClient
+        }
+        val client = parser.httpClient!!
+        client.userAgentProvider = userAgentProvider!!
+        client.proxyProvider = proxyProvider!!
+        client.charset = charset
     }
 
     open fun preHandle() {
@@ -291,7 +304,7 @@ open class Spider<T>(private val parser: Parser<T>) {
                 try {
                     setHeaders(request, referer)
                     val response = try {
-                        dispatch(request)
+                        crawler!!.httpClient!!.dispatch(request)
                     } catch (e: Exception) {
                         listeners.forEach { it.onDownloadFailed(request, e) }
                         throw e
@@ -328,7 +341,7 @@ open class Spider<T>(private val parser: Parser<T>) {
                 try {
                     setHeaders(request, referer)
                     val response = try {
-                        dispatch(request)
+                        parser.httpClient!!.dispatch(request)
                     } catch (e: Exception) {
                         listeners.forEach { it.onDownloadFailed(request, e) }
                         throw e

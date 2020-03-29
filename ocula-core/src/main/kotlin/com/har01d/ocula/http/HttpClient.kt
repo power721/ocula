@@ -16,14 +16,17 @@ interface HttpClient {
     fun dispatch(request: Request): Response
 }
 
-class FuelHttpClient : HttpClient {
+abstract class AbstractHttpClient : HttpClient {
+    override lateinit var userAgentProvider: UserAgentProvider
+    override lateinit var proxyProvider: ProxyProvider
+    override lateinit var charset: Charset
+}
+
+class FuelHttpClient : AbstractHttpClient() {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(FuelHttpClient::class.java)
     }
 
-    override lateinit var userAgentProvider: UserAgentProvider
-    override lateinit var proxyProvider: ProxyProvider
-    override lateinit var charset: Charset
     // TODO: auto detect html charset
 
     override fun dispatch(request: Request): Response {
