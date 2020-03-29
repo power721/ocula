@@ -4,6 +4,8 @@ import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 interface Listener<in T> {
     fun onStart()
@@ -20,6 +22,7 @@ interface Listener<in T> {
 
 abstract class AbstractListener<T> : Listener<T> {
     override fun onStart() {}
+
     override fun onSkip(request: Request) {}
 
     override fun onDownloadSuccess(request: Request, response: Response) {}
@@ -41,12 +44,17 @@ abstract class AbstractListener<T> : Listener<T> {
 
 class StatisticListener : AbstractListener<Any?>() {
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
+    private val executor = Executors.newSingleThreadScheduledExecutor()
     private var skipped = 0
     private var downloaded = 0
     private var crawled = 0
     private var parsed = 0
     private var errors = 0
     private var startTime: Long = 0
+
+    init {
+        executor.scheduleAtFixedRate({ log() }, 30, 30, TimeUnit.SECONDS)
+    }
 
     override fun onStart() {
         startTime = System.currentTimeMillis()
@@ -73,6 +81,10 @@ class StatisticListener : AbstractListener<Any?>() {
     }
 
     override fun onFinish() {
+        log()
+    }
+
+    private fun log() {
         val time = (System.currentTimeMillis() - startTime) / 1000
         logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
                 "Skipped pages: $skipped  Errors: $errors  Time: ${time}s")
