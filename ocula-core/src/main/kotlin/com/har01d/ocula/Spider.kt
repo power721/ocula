@@ -11,9 +11,9 @@ import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.parser.SimpleParser
 import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
-import com.har01d.ocula.queue.enqueue
 import com.har01d.ocula.util.defaultHttpHeaders
 import com.har01d.ocula.util.defaultUserAgents
+import com.har01d.ocula.util.normalizeUrl
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
@@ -108,13 +108,73 @@ open class Spider<T>(private val parser: Parser<T>) {
         finished = true
     }
 
-    fun crawl(refer: String, vararg urls: String) = queueCrawler.enqueue(refer, *urls)
+    fun crawl(refer: String, vararg urls: String) = enqueue(queueCrawler, refer, *urls)
 
-    fun crawl(refer: String, vararg requests: Request) = queueCrawler.enqueue(refer, *requests)
+    fun crawl(refer: String, vararg requests: Request) = enqueue(queueCrawler, refer, *requests)
 
-    fun follow(refer: String, vararg urls: String) = queueParser.enqueue(refer, *urls)
+    fun follow(refer: String, vararg urls: String) = enqueue(queueParser, refer, *urls)
 
-    fun follow(refer: String, vararg requests: Request) = queueParser.enqueue(refer, *requests)
+    fun follow(refer: String, vararg requests: Request) = enqueue(queueParser, refer, *requests)
+
+    open fun enqueue(queue: RequestQueue, refer: String, vararg urls: String): Boolean {
+        var success = false
+        for (url in urls) {
+            if (!validateUrl(url)) {
+                continue
+            }
+            val uri = normalizeUrl(refer, url)
+            if (uri != null) {
+                val headers: MutableMap<String, Collection<String>> = mutableMapOf("Referer" to listOf(refer))
+                val req = Request(uri, headers = headers)
+                if (!robotsHandler.handle(req)) {
+                    listeners.forEach { it.onSkip(req) }
+                    logger.debug("Skip {}", req.url)
+                    continue
+                }
+                if (!dedupHandler.handle(req)) {
+                    logger.debug("Ignore {}", req.url)
+                    continue
+                }
+                queue.push(req)
+                success = true
+            }
+        }
+        return success
+    }
+
+    open fun enqueue(queue: RequestQueue, refer: String, vararg requests: Request): Boolean {
+        var success = false
+        for (request in requests) {
+            val url = request.url
+            if (!validateUrl(url)) {
+                continue
+            }
+            val uri = normalizeUrl(refer, url)
+            if (uri != null) {
+                request.headers["Referer"] = listOf(refer)
+                val req = request.copy(url = uri)
+                if (!robotsHandler.handle(req)) {
+                    listeners.forEach { it.onSkip(req) }
+                    logger.debug("Skip {}", req.url)
+                    continue
+                }
+                if (!dedupHandler.handle(req)) {
+                    logger.debug("Ignore {}", req.url)
+                    continue
+                }
+                queue.push(req)
+                success = true
+            }
+        }
+        return success
+    }
+
+    open fun validateUrl(url: String): Boolean {
+        if (url.isBlank() || url == "#" || url.startsWith("javascript:")) {
+            return false
+        }
+        return true
+    }
 
     fun dispatch(request: Request) = httpClient.dispatch(request)
 
@@ -229,10 +289,6 @@ open class Spider<T>(private val parser: Parser<T>) {
             val request = queueCrawler.poll(1000L)
             if (request != null) {
                 try {
-                    if (!dedupHandler.handle(request)) {
-                        logger.debug("Ignore {}", request.url)
-                        continue
-                    }
                     setHeaders(request, referer)
                     val response = try {
                         dispatch(request)
@@ -270,16 +326,6 @@ open class Spider<T>(private val parser: Parser<T>) {
             val request = queueParser.poll(1000L)
             if (request != null) {
                 try {
-                    if (!robotsHandler.handle(request)) {
-                        listeners.forEach { it.onSkip(request) }
-                        logger.debug("Skip {}", request.url)
-                        continue
-                    }
-                    if (!dedupHandler.handle(request)) {
-                        // TODO: before enqueue
-                        logger.debug("Ignore {}", request.url)
-                        continue
-                    }
                     setHeaders(request, referer)
                     val response = try {
                         dispatch(request)
