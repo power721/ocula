@@ -115,7 +115,7 @@ fun Element.lines(): List<String> {
     return list
 }
 
-fun Elements.texts(): String {
+fun Elements.string(): String {
     return this.fold(StringBuilder()) { sb, e ->
         sb.append(e.texts())
     }.toString()
@@ -125,4 +125,8 @@ fun Elements.lines(): List<String> {
     return this.fold(mutableListOf()) { list, e ->
         list.apply { addAll(e.lines()) }
     }
+}
+
+fun Elements.texts(): List<String> {
+    return this.map { it.text() }
 }
