@@ -141,6 +141,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     open fun enqueue(queue: RequestQueue) {
         requests.forEach {
             queue.push(it)
+            logger.info(it.url)
         }
     }
 
@@ -295,14 +296,14 @@ open class Spider<T>(private val parser: Parser<T>) {
                     }
                     listeners.forEach { it.onCrawlSuccess(request, response) }
 
+                    delay(interval)
+
                     if (!enqueue(queueCrawler, response.url, *crawler!!.candidates.toTypedArray())) {
                         finish()
                     }
-
-                    delay(interval)
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
-                    logger.warn("Crawl pages failed", e)
+                    logger.warn("Crawl page {} failed", request.url, e)
                 }
             }
 
@@ -336,8 +337,6 @@ open class Spider<T>(private val parser: Parser<T>) {
                     }
                     listeners.forEach { it.onParseSuccess(request, response, result) }
 
-                    follow(response.url, *parser.candidates.toTypedArray())
-
                     resultHandlers.forEach {
                         try {
                             it.handle(request, response, result)
@@ -348,9 +347,11 @@ open class Spider<T>(private val parser: Parser<T>) {
                     }
 
                     delay(interval)
+
+                    follow(response.url, *parser.candidates.toTypedArray())
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
-                    logger.warn("Parse page failed", e)
+                    logger.warn("Parse page {} failed", request.url, e)
                 }
             }
 
