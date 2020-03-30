@@ -32,6 +32,7 @@ class DefaultWebDriverProvider(
         size: Int = 1,
         private val proxyProvider: ProxyProvider = EmptyProxyProvider,
         private val driverType: DriverType = DriverType.CHROME,
+        private val headless: Boolean = true,
         private val phantomjsExecPath: String? = null
 ) : WebDriverProvider {
     private val drivers: MutableList<WebDriver> = mutableListOf()
@@ -77,12 +78,12 @@ class DefaultWebDriverProvider(
         when (driverType) {
             DriverType.CHROME -> {
                 val options = cap as ChromeOptions
-                options.setHeadless(true)
+                options.setHeadless(headless)
                 return ChromeDriver(options)
             }
             DriverType.FIREFOX -> {
                 val options = cap as FirefoxOptions
-                options.setHeadless(true)
+                options.setHeadless(headless)
                 return FirefoxDriver(options)
             }
             DriverType.EDGE -> {

@@ -9,6 +9,7 @@ import com.har01d.ocula.parser.SimpleParser
 
 open class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
     var driverType: DriverType = DriverType.CHROME
+    var headless: Boolean = true
     var phantomjsExecPath: String? = null
     var webDriverProvider: WebDriverProvider? = null
     var actionHandler: SeleniumActionHandler? = null
@@ -30,7 +31,7 @@ open class SeleniumSpider<T>(parser: Parser<T>) : Spider<T>(parser) {
     override fun initHttpClient() {
         val size = if (httpProxies.size > 0) httpProxies.size else 1
         webDriverProvider = webDriverProvider
-                ?: DefaultWebDriverProvider(size, proxyProvider!!, driverType, phantomjsExecPath)
+                ?: DefaultWebDriverProvider(size, proxyProvider!!, driverType, headless, phantomjsExecPath)
         val httpClient = SeleniumHttpClient(webDriverProvider!!)
         httpClient.actionHandler = actionHandler
         this.httpClient = httpClient
