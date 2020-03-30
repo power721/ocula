@@ -81,6 +81,7 @@ class StatisticListener : AbstractListener<Any?>() {
     }
 
     override fun onFinish() {
+        executor.shutdown()
         log()
     }
 
