@@ -1,5 +1,6 @@
-package com.har01d.ocula.examples
+package com.har01d.ocula.examples.selenium
 
+import com.har01d.ocula.examples.QuotesParser
 import com.har01d.ocula.selenium.SeleniumSpider
 import com.har01d.ocula.selenium.WaitElementPresent
 

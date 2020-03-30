@@ -1,4 +1,4 @@
-package com.har01d.ocula.examples
+package com.har01d.ocula.examples.selenium
 
 import com.har01d.ocula.selenium.LoadAll
 import com.har01d.ocula.selenium.SimpleSeleniumSpider
