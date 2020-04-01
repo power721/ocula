@@ -74,6 +74,7 @@ class DefaultRobotsHandler : RobotsHandler {
                             break
                         }
                         // TODO: Allow:
+                        // TODO: wildcard
                         list += line.split(":")[1].trim()
                     }
                 }

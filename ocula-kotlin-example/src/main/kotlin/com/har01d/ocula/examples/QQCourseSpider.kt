@@ -14,8 +14,7 @@ fun main() {
 class QQCourseCrawler : AbstractCrawler() {
     override fun handle(request: Request, response: Response) {
         println("handle " + response.url)
-        response.select("a[href]").forEach {
-            val url = it.attr("href")
+        response.links().forEach { url ->
             if (url.matches("(https:)?//ke.qq.com/course/list.*".toRegex()) || url.startsWith("/course/list")) {
                 crawl(url)
             } else if (url.matches("(https:)?//ke.qq.com/course/\\d+.*".toRegex())) {
@@ -25,13 +24,13 @@ class QQCourseCrawler : AbstractCrawler() {
     }
 }
 
-class QQCourseParser : AbstractParser<QQCourse>() {
-    override fun parse(request: Request, response: Response): QQCourse {
+class QQCourseParser : AbstractParser<Course>() {
+    override fun parse(request: Request, response: Response): Course {
         val name = response.select(".item--tt").text()
         val school = response.select(".js-agency-name").text()
         val free = "免费" == response.select(".title-free").text()
-        return QQCourse(name, response.url, school, free)
+        return Course(name, response.url, school, free)
     }
 }
 
-data class QQCourse(val name: String, val url: String, val school: String, val free: Boolean)
+data class Course(val name: String, val url: String, val school: String, val free: Boolean)
