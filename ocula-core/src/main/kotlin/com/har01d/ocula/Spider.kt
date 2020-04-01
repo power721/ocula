@@ -41,7 +41,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
-    val listeners = mutableListOf<Listener<T>>(StatisticListener())
+    val listeners = mutableListOf<Listener<T>>(StatisticListener().apply { spider = this@Spider })
     var httpClient: HttpClient? = null
     var dedupHandler: DedupHandler = HashSetDedupHandler()
     var queueParser: RequestQueue = InMemoryRequestQueue()

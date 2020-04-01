@@ -1,5 +1,6 @@
 package com.har01d.ocula.listener
 
+import com.har01d.ocula.Spider
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import org.slf4j.Logger
@@ -43,6 +44,7 @@ abstract class AbstractListener<T> : Listener<T> {
 }
 
 class StatisticListener : AbstractListener<Any?>() {
+    lateinit var spider: Spider<*>
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
     private val executor = Executors.newSingleThreadScheduledExecutor()
     private var skipped = 0
@@ -87,8 +89,15 @@ class StatisticListener : AbstractListener<Any?>() {
 
     private fun log() {
         val time = (System.currentTimeMillis() - startTime) / 1000
+        val size1 = spider.queueCrawler.size()
+        val size2 = spider.queueParser.size()
+        val queue = if (size1 > 0 || size2 > 0) {
+            if (spider.crawler != null) " Queue: $size1-$size2 " else " Queue: $size2 "
+        } else {
+            ""
+        }
         logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
-                "Skipped pages: $skipped  Errors: $errors  Time: ${time}s")
+                "Skipped pages: $skipped $queue Errors: $errors  Time: ${time}s")
     }
 }
 

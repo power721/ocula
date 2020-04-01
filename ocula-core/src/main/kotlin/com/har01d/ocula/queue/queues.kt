@@ -9,6 +9,7 @@ interface RequestQueue {
     fun take(): Request
     fun poll(milliseconds: Long): Request?
     fun push(request: Request)
+    fun size(): Int
     fun isEmpty(): Boolean
 }
 
@@ -18,5 +19,6 @@ class InMemoryRequestQueue : RequestQueue {
     override fun take(): Request = queue.take()
     override fun poll(milliseconds: Long): Request? = queue.poll(milliseconds, TimeUnit.MILLISECONDS)
     override fun push(request: Request) = queue.put(request)
+    override fun size(): Int = queue.size
     override fun isEmpty(): Boolean = queue.isEmpty()
 }
