@@ -24,6 +24,10 @@ abstract class AbstractParser<T> : Parser<T> {
     fun follow(next: Request) {
         candidates += next
     }
+
+    fun follow(response: Response, vararg urls: String): Boolean = context.follow(response.url, *urls)
+    fun follow(response: Response, vararg requests: Request): Boolean = context.follow(response.url, *requests)
+    fun finish() = context.finish()
 }
 
 class NoopParser : AbstractParser<String>() {

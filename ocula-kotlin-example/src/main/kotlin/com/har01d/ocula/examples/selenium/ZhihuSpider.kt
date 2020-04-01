@@ -1,14 +1,23 @@
 package com.har01d.ocula.examples.selenium
 
+import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.Response
+import com.har01d.ocula.parser.AbstractParser
 import com.har01d.ocula.selenium.LoadAll
-import com.har01d.ocula.selenium.SimpleSeleniumSpider
+import com.har01d.ocula.selenium.SeleniumSpider
 import com.har01d.ocula.util.normalizeUrl
 
 fun main() {
-    SimpleSeleniumSpider("https://www.zhihu.com/search?type=content&q=Java") { _, res ->
-        res.select(".SearchResult-Card .List-item").map {
+    SeleniumSpider(ZhihuParser(), "https://www.zhihu.com/search?type=content&q=Java") {
+        actionHandler = LoadAll()
+    }.run()
+}
+
+class ZhihuParser : AbstractParser<List<Question>>() {
+    override fun parse(request: Request, response: Response): List<Question> {
+        return response.select(".SearchResult-Card .List-item").map {
             val title = it.select(".ContentItem-title a").text()
-            val url = normalizeUrl(res.url, it.select(".ContentItem-title a").attr("href"))
+            val url = normalizeUrl(response.url, it.select(".ContentItem-title a").attr("href"))
             val text = it.select(".VoteButton").text()
             val m = "(\\d+)".toRegex().find(text)
             if (m != null) {
@@ -18,11 +27,10 @@ fun main() {
                 Question(title, url, 0)
             }
         }.also {
+            finish()
             println(it.size)
         }
-    }.apply {
-        actionHandler = LoadAll()
-    }.run()
+    }
 }
 
 data class Question(val title: String, val url: String?, val vote: Int)

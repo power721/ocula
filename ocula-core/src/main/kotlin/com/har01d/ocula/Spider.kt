@@ -25,9 +25,19 @@ import java.nio.charset.Charset
 import java.util.*
 
 
-open class Spider<T>(private val parser: Parser<T>) : Context {
+open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
+
+        init {
+            Configuration.setDefaults(object : Configuration.Defaults {
+                private val mapper = jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+
+                override fun jsonProvider() = JacksonJsonProvider(mapper)
+                override fun mappingProvider() = JacksonMappingProvider(mapper)
+                override fun options() = EnumSet.noneOf(Option::class.java)
+            })
+        }
     }
 
     val requests = mutableListOf<Request>()
@@ -52,23 +62,17 @@ open class Spider<T>(private val parser: Parser<T>) : Context {
     var concurrency: Int = 0
     private var finished = false
 
-    constructor(parser: Parser<T>, vararg urls: String) : this(parser) {
+    constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
         requests += urls.map { Request(it) }
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String) : this(parser) {
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
         this.crawler = crawler
         requests += urls.map { Request(it) }
     }
 
     init {
-        Configuration.setDefaults(object : Configuration.Defaults {
-            private val mapper = jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-
-            override fun jsonProvider() = JacksonJsonProvider(mapper)
-            override fun mappingProvider() = JacksonMappingProvider(mapper)
-            override fun options() = EnumSet.noneOf(Option::class.java)
-        })
+        this.configure()
     }
 
     fun addUrl(url: String) {

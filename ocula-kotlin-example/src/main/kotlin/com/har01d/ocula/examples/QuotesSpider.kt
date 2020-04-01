@@ -13,7 +13,7 @@ import com.har01d.ocula.parser.AbstractParser
 
 
 fun main() {
-    val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/").apply {
+    val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/") {
         authHandler = CsrfFormAuthHandler()
         listeners += LogListener
         resultHandlers += ConsoleLogResultHandler

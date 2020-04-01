@@ -16,7 +16,7 @@ fun main() {
         res.select("img[src]").map { it["src"] }
     }.downloadImages(System.getProperty("java.io.tmpdir") + "/images")
 
-    SimpleSpider("https://bing.com") { _, res ->
+    SimpleSpider("https://cn.bing.com") { _, res ->
         normalizeUrl(res.url, res.select("#bgLink", "href")) ?: ""
     }.apply {
         resultHandlers += ImageHandler()

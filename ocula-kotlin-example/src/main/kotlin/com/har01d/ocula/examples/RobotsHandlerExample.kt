@@ -7,7 +7,7 @@ import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.AbstractParser
 
 fun main() {
-    Spider(PageParser(), "https://cn.bing.com/").apply {
+    Spider(PageParser(), "https://cn.bing.com/") {
         robotsHandler = DefaultRobotsHandler()
     }.run()
 }
@@ -20,7 +20,7 @@ class PageParser : AbstractParser<String>() {
                 follow(url)
             }
         }
-        context.finish()
+        finish()
         return response.select("title").text()
     }
 }

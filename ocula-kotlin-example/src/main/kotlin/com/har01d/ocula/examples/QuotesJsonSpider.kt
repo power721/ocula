@@ -22,9 +22,9 @@ class QuotesJsonParser : AbstractParser<List<JsonQuote>>() {
         if (hasNext) {
             val page: Int = response.jsonPath("$.page", Int::class.java)
             val next = "http://quotes.toscrape.com/api/quotes?page=" + (page + 1)
-            context.follow(response.url, next)
+            follow(response, next)
         } else {
-            context.finish()
+            finish()
         }
         return quotes
     }
