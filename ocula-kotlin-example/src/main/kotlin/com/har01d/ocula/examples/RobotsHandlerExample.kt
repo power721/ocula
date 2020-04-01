@@ -20,7 +20,7 @@ class PageParser : AbstractParser<String>() {
                 follow(url)
             }
         }
-        spider.finish()
+        context.finish()
         return response.select("title").text()
     }
 }

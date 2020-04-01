@@ -32,8 +32,8 @@ class QuotesParser extends AbstractParser<List<Quote>> {
         }
 
         String next = response.select("li.next a", "href");
-        if (!spider.follow(request.getUrl(), next)) {
-            spider.finish();
+        if (!context.follow(request.getUrl(), next)) {
+            context.finish();
         }
         return quotes;
     }

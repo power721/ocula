@@ -25,7 +25,7 @@ import java.nio.charset.Charset
 import java.util.*
 
 
-open class Spider<T>(private val parser: Parser<T>) {
+open class Spider<T>(private val parser: Parser<T>) : Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
     }
@@ -102,13 +102,13 @@ open class Spider<T>(private val parser: Parser<T>) {
         logger.info("downloaded ${handler.count} images")
     }
 
-    fun finish() {
+    override fun finish() {
         finished = true
     }
 
-    fun follow(refer: String, vararg urls: String) = enqueue(queueParser, refer, *urls)
+    override fun follow(refer: String, vararg urls: String) = enqueue(queueParser, refer, *urls)
 
-    fun follow(refer: String, vararg requests: Request) = enqueue(queueParser, refer, *requests)
+    override fun follow(refer: String, vararg requests: Request) = enqueue(queueParser, refer, *requests)
 
     open fun enqueue(queue: RequestQueue, refer: String, vararg urls: String): Boolean {
         return enqueue(queue, refer, *urls.map { Request(it) }.toTypedArray())
@@ -156,7 +156,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         return true
     }
 
-    fun dispatch(request: Request) = httpClient!!.dispatch(request)
+    override fun dispatch(request: Request) = httpClient!!.dispatch(request)
 
     fun run() = runBlocking {
         validate()
@@ -168,7 +168,7 @@ open class Spider<T>(private val parser: Parser<T>) {
         if (crawler != null) {
             enqueue(queueCrawler)
 
-            crawler!!.spider = this@Spider
+            crawler!!.context = this@Spider
             GlobalScope.launch {
                 crawl(this)
             }
@@ -176,7 +176,7 @@ open class Spider<T>(private val parser: Parser<T>) {
             enqueue(queueParser)
         }
 
-        parser.spider = this@Spider
+        parser.context = this@Spider
         val jobs = mutableListOf<Job>()
         repeat(concurrency) {
             val job = GlobalScope.launch {
@@ -240,7 +240,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     open fun preHandle() {
         requests.forEach { request ->
             preHandlers.forEach {
-                it.spider = this@Spider
+                it.context = this@Spider
                 try {
                     it.handle(request)
                 } catch (e: Exception) {
@@ -254,7 +254,7 @@ open class Spider<T>(private val parser: Parser<T>) {
     open fun postHandle() {
         requests.forEach { request ->
             postHandlers.forEach {
-                it.spider = this@Spider
+                it.context = this@Spider
                 try {
                     it.handle(request)
                 } catch (e: Exception) {

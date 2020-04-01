@@ -2,7 +2,7 @@ package com.har01d.ocula.handler
 
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
-import com.har01d.ocula.Spider
+import com.har01d.ocula.Context
 import com.har01d.ocula.http.Request
 import java.net.URL
 import java.util.*
@@ -11,21 +11,21 @@ import java.util.concurrent.ConcurrentHashMap
 typealias Parameters = List<Pair<String, Any?>>
 
 interface PreHandler {
-    var spider: Spider<*>
+    var context: Context
     fun handle(request: Request)
 }
 
 abstract class AbstractPreHandler : PreHandler {
-    override lateinit var spider: Spider<*>
+    override lateinit var context: Context
 }
 
 interface PostHandler {
-    var spider: Spider<*>
+    var context: Context
     fun handle(request: Request)
 }
 
 abstract class AbstractPostHandler : PostHandler {
-    override lateinit var spider: Spider<*>
+    override lateinit var context: Context
 }
 
 interface DedupHandler {

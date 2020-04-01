@@ -20,7 +20,7 @@ class CourseCrawler : AbstractCrawler() {
 
         val last = response.select(".ux-pager_itm a").last()
         if (last.className() == "th-bk-main") {
-            spider.finish()
+            context.finish()
         } else {
             val current = response.select(".th-bk-main").text().toInt()
             crawl("?pageIndex=" + (current + 1))

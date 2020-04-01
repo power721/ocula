@@ -34,8 +34,8 @@ class QuotesParser : AbstractParser<List<Quote>>() {
 
         println(response.select("a[href=/logout]").text())
         val next = response.select("li.next a", "href")
-        if (!spider.follow(response.url, next)) {
-            spider.finish()
+        if (!context.follow(response.url, next)) {
+            context.finish()
         }
         return quotes
     }
@@ -44,14 +44,14 @@ class QuotesParser : AbstractParser<List<Quote>>() {
 class CsrfFormAuthHandler : AuthHandler() {
     override fun handle(request: Request) {
         val url = "http://quotes.toscrape.com/login"
-        val res = spider.dispatch(Request(url))
+        val res = dispatch(Request(url))
         val token = res.select("input[name=csrf_token]").`val`()
         val formRequest = Request(url, HttpMethod.POST, listOf(
                 "csrf_token" to token,
                 "username" to "user",
                 "password" to "user"
         ), cookies = res.cookies.toMutableList(), allowRedirects = false)
-        spider.dispatch(formRequest).apply {
+        dispatch(formRequest).apply {
             request.cookies += cookies
         }
     }

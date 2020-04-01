@@ -14,7 +14,7 @@ fun main() {
 object GoogleParser : AbstractParser<String>() {
     override fun parse(request: Request, response: Response): String {
         val text = response.select("div.fbar div span").text()
-        spider.finish()
+        context.finish()
         return text
     }
 }

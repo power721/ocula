@@ -7,7 +7,7 @@ import java.net.HttpCookie
 import java.util.*
 
 abstract class AuthHandler : AbstractPreHandler() {
-    fun dispatch(request: Request) = spider.httpClient!!.dispatch(request)
+    fun dispatch(request: Request) = context.dispatch(request)
 }
 
 class BasicAuthHandler(private val username: String, private val password: String) : AuthHandler() {
@@ -38,7 +38,7 @@ val sessionHandler = fun(request: Request, response: Response) {
 class FormAuthHandler(private val actionUrl: String, private val parameters: Parameters, val block: (request: Request, response: Response) -> Unit = sessionHandler) : AuthHandler() {
     override fun handle(request: Request) {
         val formRequest = Request(actionUrl, HttpMethod.POST, parameters)
-        val response = spider.dispatch(formRequest)
+        val response = dispatch(formRequest)
         block(request, response)
     }
 }
