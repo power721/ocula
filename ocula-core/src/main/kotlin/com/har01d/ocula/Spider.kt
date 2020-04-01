@@ -79,6 +79,10 @@ open class Spider<T>(private val parser: Parser<T>) {
         authHandler = BasicAuthHandler(username, password)
     }
 
+    fun cookieAuth(name: String, value: String) {
+        authHandler = CookieAuthHandler(name, value)
+    }
+
     fun tokenAuth(token: String, header: String = "Authorization") {
         authHandler = TokenAuthHandler(token, header)
     }

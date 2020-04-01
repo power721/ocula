@@ -3,13 +3,22 @@ package com.har01d.ocula.handler
 import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
+import java.net.HttpCookie
 import java.util.*
 
-abstract class AuthHandler : AbstractPreHandler()
+abstract class AuthHandler : AbstractPreHandler() {
+    fun dispatch(request: Request) = spider.httpClient!!.dispatch(request)
+}
 
 class BasicAuthHandler(private val username: String, private val password: String) : AuthHandler() {
     override fun handle(request: Request) {
         request.headers["Authorization"] = listOf("Basic " + Base64.getEncoder().encode("$username:$password".toByteArray()))
+    }
+}
+
+class CookieAuthHandler(private val name: String, private val value: String) : AuthHandler() {
+    override fun handle(request: Request) {
+        request.cookies += HttpCookie(name, value)
     }
 }
 
