@@ -104,7 +104,7 @@ object LogListener : AbstractListener<Any?>() {
     }
 
     override fun onDownloadSuccess(request: Request, response: Response) {
-        logger.info("Download ${request.url} success")
+        logger.info("Download ${request.url} success, ${response.time} ms")
     }
 
     override fun onDownloadFailed(request: Request, e: Exception) {

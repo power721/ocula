@@ -10,5 +10,6 @@ data class Response(
         val responseMessage: String = "",
         val headers: Map<String, Collection<String>> = mapOf(),
         val cookies: List<HttpCookie> = listOf(),
-        val contentLength: Long = 0L
+        val contentLength: Long = 0L,
+        val time: Long = 0L
 ) : Selector(body)

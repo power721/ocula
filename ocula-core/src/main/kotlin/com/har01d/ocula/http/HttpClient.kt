@@ -30,6 +30,7 @@ class FuelHttpClient : AbstractHttpClient() {
     // TODO: auto detect html charset
 
     override fun dispatch(request: Request): Response {
+        val start = System.currentTimeMillis()
         val id = generateId(6)
         logger.debug("[Request][$id] ${request.method} ${request.url}")
         if (proxyProvider.hasAny()) {
@@ -66,7 +67,8 @@ class FuelHttpClient : AbstractHttpClient() {
                         response.responseMessage,
                         response.headers,
                         response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
-                        response.contentLength
+                        response.contentLength,
+                        System.currentTimeMillis() - start
                 )
             }
         }
