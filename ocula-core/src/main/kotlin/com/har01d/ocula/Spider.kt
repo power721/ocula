@@ -21,6 +21,7 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.net.URL
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -62,6 +63,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     var charset: Charset = Charsets.UTF_8
     var interval: Long = 500L
     var concurrency: Int = 0
+    private var _name: String? = null
     private var finished = false
     private lateinit var coroutineContext: CoroutineContext
 
@@ -76,6 +78,20 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
     init {
         this.configure()
+    }
+
+    override fun getName(): String {
+        if (_name != null) {
+            return _name!!
+        }
+        if (requests.isNotEmpty()) {
+            return URL(requests[0].url).host
+        }
+        return this.javaClass.canonicalName
+    }
+
+    fun setName(name: String) {
+        this._name = name
     }
 
     fun addUrl(url: String) {
@@ -156,7 +172,6 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     open fun enqueue(queue: RequestQueue) {
         requests.forEach {
             queue.push(it)
-            logger.info(it.url)
         }
     }
 
@@ -173,6 +188,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         validate()
         prepare()
 
+        logger.info("Spider ${getName()} start")
         listeners.forEach { it.onStart() }
         preHandle()
 
@@ -199,6 +215,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
         postHandle()
         listeners.forEach { it.onFinish() }
+        logger.info("Spider ${getName()} finished")
     }
 
     open fun validate() {

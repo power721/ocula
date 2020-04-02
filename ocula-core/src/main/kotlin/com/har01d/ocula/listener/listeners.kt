@@ -84,17 +84,14 @@ class StatisticListener : AbstractListener<Any?>() {
         } else {
             ""
         }
-        logger.info("Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
+        val name = spider.getName()
+        logger.info("$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
                 "Skipped pages: $skipped $queue Errors: $errors  Time: ${time}s")
     }
 }
 
 object LogListener : AbstractListener<Any?>() {
     private val logger: Logger = LoggerFactory.getLogger(LogListener::class.java)
-
-    override fun onStart() {
-        logger.info("Spider start")
-    }
 
     override fun onSkip(request: Request) {
         logger.info("Skip disallowed url {}", request.url)
@@ -126,9 +123,5 @@ object LogListener : AbstractListener<Any?>() {
 
     override fun onError(e: Throwable) {
         logger.warn("Error", e)
-    }
-
-    override fun onFinish() {
-        logger.info("Spider finished")
     }
 }
