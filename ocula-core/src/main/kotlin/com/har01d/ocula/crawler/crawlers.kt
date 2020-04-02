@@ -31,7 +31,7 @@ abstract class AbstractCrawler : Crawler {
         return result
     }
 
-    fun follow(response: Response, href: String) = context.follow(response.url, href)
-    fun follow(response: Response, request: Request) = context.follow(response.url, request)
+    fun follow(response: Response, vararg href: String) = context.follow(response.url, *href)
+    fun follow(response: Response, vararg request: Request) = context.follow(response.url, *request)
     fun finish() = context.finish()
 }

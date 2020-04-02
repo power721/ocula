@@ -303,12 +303,14 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                                 listeners.forEach { it.onCrawlSuccess(request, response) }
                             } catch (e: Exception) {
                                 listeners.forEach { it.onCrawlFailed(request, e) }
+                                listeners.forEach { it.onError(e) }
                                 logger.warn("Crawl page {} failed", request.url, e)
                             }
                             count.decrementAndGet()
                         }
                         result.onFailure { e ->
                             listeners.forEach { it.onDownloadFailed(request, e) }
+                            listeners.forEach { it.onError(e) }
                             logger.warn("Download page {} failed", request.url, e)
                             count.decrementAndGet()
                         }
@@ -365,6 +367,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                         }
                         res.onFailure { e ->
                             listeners.forEach { it.onDownloadFailed(request, e) }
+                            listeners.forEach { it.onError(e) }
                             logger.warn("Download page {} failed", request.url, e)
                             count.decrementAndGet()
                         }

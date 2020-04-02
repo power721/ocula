@@ -19,7 +19,7 @@ open class Selector(private val body: String) {
         JsonPath.parse(body)
     }
 
-    fun links(): List<String> = select("a[href]").map { it.attr("href") }
+    fun links(cssQuery: String = "a[href]"): List<String> = select(cssQuery).map { it.attr("href") }
 
     fun xpath(expression: String): List<String> = Xsoup.compile(expression).evaluate(document).list()
 
