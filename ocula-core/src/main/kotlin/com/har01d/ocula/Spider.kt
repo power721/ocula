@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 
 open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Context {
@@ -62,6 +63,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     var interval: Long = 500L
     var concurrency: Int = 0
     private var finished = false
+    private lateinit var coroutineContext: CoroutineContext
 
     constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
         requests += urls.map { Request(it) }
@@ -178,7 +180,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
             enqueue(queueCrawler)
 
             crawler!!.context = this@Spider
-            GlobalScope.launch {
+            launch(coroutineContext) {
                 crawl(this)
             }
         } else {
@@ -188,7 +190,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         parser.context = this@Spider
         val jobs = mutableListOf<Job>()
         repeat(concurrency) {
-            val job = GlobalScope.launch {
+            val job = launch(coroutineContext) {
                 parse(this)
             }
             jobs += job
@@ -213,6 +215,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                 1
             }
         }
+        coroutineContext = newFixedThreadPoolContext(concurrency, "Spider")
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
         }

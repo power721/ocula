@@ -28,9 +28,11 @@ open class SeleniumSpider<T>(parser: Parser<T>, configure: SeleniumSpider<T>.() 
     }
 
     override fun initHttpClient() {
-        val size = if (httpProxies.size > 0) httpProxies.size else 1
+        if (concurrency == 0) {
+            concurrency = if (httpProxies.size > 0) httpProxies.size else 1
+        }
         webDriverProvider = webDriverProvider
-                ?: DefaultWebDriverProvider(size, proxyProvider!!, driverType, headless, phantomjsExecPath)
+                ?: DefaultWebDriverProvider(concurrency, proxyProvider!!, driverType, headless, phantomjsExecPath)
         val httpClient = SeleniumHttpClient(webDriverProvider!!)
         httpClient.actionHandler = actionHandler
         this.httpClient = httpClient
