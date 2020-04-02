@@ -45,12 +45,9 @@ class StatisticListener : AbstractListener<Any?>() {
     private var errors = 0
     private var startTime: Long = 0
 
-    init {
-        executor.scheduleAtFixedRate({ log() }, 30, 30, TimeUnit.SECONDS)
-    }
-
     override fun onStart() {
         startTime = System.currentTimeMillis()
+        executor.scheduleAtFixedRate({ log() }, 30, 30, TimeUnit.SECONDS)
     }
 
     override fun onSkip(request: Request) {
@@ -75,14 +72,14 @@ class StatisticListener : AbstractListener<Any?>() {
 
     override fun onFinish() {
         executor.shutdown()
-        log()
+        log(true)
     }
 
-    private fun log() {
+    private fun log(finished: Boolean = false) {
         val time = (System.currentTimeMillis() - startTime) / 1000
         val size1 = spider.queueCrawler.size()
         val size2 = spider.queueParser.size()
-        val queue = if (size1 > 0 || size2 > 0) {
+        val queue = if (!finished) {
             if (spider.crawler != null) " Queue: $size1-$size2 " else " Queue: $size2 "
         } else {
             ""

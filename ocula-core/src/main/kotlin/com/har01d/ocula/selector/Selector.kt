@@ -107,6 +107,7 @@ fun Element.lines(): List<String> {
     val sb = StringBuilder()
     for (element in childNodes()) {
         if (sb.isNotEmpty()) sb.append(" ")
+        // TODO: handle "li", "dd", "dt", "p", "h1", "h2", "h3", "h4", "h5", "tr"
         if (element.nodeName() == "br") {
             list += sb.toString().trim()
             sb.clear()
