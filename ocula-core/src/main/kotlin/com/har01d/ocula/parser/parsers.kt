@@ -8,22 +8,12 @@ import com.har01d.ocula.http.Response
 interface Parser<out T> {
     var context: Context
     var httpClient: HttpClient?
-    val candidates: List<Request>
     fun parse(request: Request, response: Response): T
 }
 
 abstract class AbstractParser<T> : Parser<T> {
     override lateinit var context: Context
     override var httpClient: HttpClient? = null
-    override val candidates: MutableList<Request> = mutableListOf()
-
-    fun follow(next: String) {
-        candidates += Request(next)
-    }
-
-    fun follow(next: Request) {
-        candidates += next
-    }
 
     fun follow(response: Response, vararg urls: String): Boolean = context.follow(response.url, *urls)
     fun follow(response: Response, vararg requests: Request): Boolean = context.follow(response.url, *requests)

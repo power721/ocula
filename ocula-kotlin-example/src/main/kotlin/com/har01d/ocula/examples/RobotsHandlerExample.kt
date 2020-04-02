@@ -17,7 +17,7 @@ class PageParser : AbstractParser<String>() {
         response.select("a[href]").forEach {
             val url = it.attr("href")
             if (url.startsWith("/") || url.startsWith("https://cn.bing.com/")) {
-                follow(url)
+                follow(response, url)
             }
         }
         finish()

@@ -8,12 +8,14 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.HttpCookie
 import java.nio.charset.Charset
+import kotlin.Result as KResult
 
 interface HttpClient {
     var userAgentProvider: UserAgentProvider
     var proxyProvider: ProxyProvider
     var charset: Charset
     fun dispatch(request: Request): Response
+    fun dispatch(request: Request, handler: (result: KResult<Response>) -> Unit)
 }
 
 abstract class AbstractHttpClient : HttpClient {
@@ -31,6 +33,51 @@ class FuelHttpClient : AbstractHttpClient() {
 
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
+        val (id, req) = prepare(request)
+        val (_, response, result) = req.header(request.headers.toMap()).responseString(request.charset ?: charset)
+        when (result) {
+            is Result.Failure -> throw result.getException()
+            is Result.Success -> {
+                logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
+                return Response(
+                        response.url.toExternalForm(),
+                        result.value,
+                        response.statusCode,
+                        response.responseMessage,
+                        response.headers,
+                        response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
+                        response.contentLength,
+                        System.currentTimeMillis() - start
+                )
+            }
+        }
+    }
+
+    override fun dispatch(request: Request, handler: (result: KResult<Response>) -> Unit) {
+        val start = System.currentTimeMillis()
+        val (id, req) = prepare(request)
+        req.header(request.headers.toMap()).responseString(request.charset ?: charset) { _, response, result ->
+            when (result) {
+                is Result.Failure -> handler(KResult.failure(result.getException()))
+                is Result.Success -> {
+                    logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
+                    val res = Response(
+                            response.url.toExternalForm(),
+                            result.value,
+                            response.statusCode,
+                            response.responseMessage,
+                            response.headers,
+                            response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
+                            response.contentLength,
+                            System.currentTimeMillis() - start
+                    )
+                    handler(KResult.success(res))
+                }
+            }
+        }
+    }
+
+    private fun prepare(request: Request): Pair<String, com.github.kittinunf.fuel.core.Request> {
         val id = generateId(6)
         logger.debug("[Request][$id] ${request.method} ${request.url}")
         if (proxyProvider.hasAny()) {
@@ -55,22 +102,6 @@ class FuelHttpClient : AbstractHttpClient() {
         if (userAgentProvider.hasAny()) {
             req.header("User-Agent", userAgentProvider.select())
         }
-        val (_, response, result) = req.header(request.headers.toMap()).responseString(request.charset ?: charset)
-        when (result) {
-            is Result.Failure -> throw result.getException()
-            is Result.Success -> {
-                logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
-                return Response(
-                        response.url.toExternalForm(),
-                        result.value,
-                        response.statusCode,
-                        response.responseMessage,
-                        response.headers,
-                        response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
-                        response.contentLength,
-                        System.currentTimeMillis() - start
-                )
-            }
-        }
+        return Pair(id, req)
     }
 }

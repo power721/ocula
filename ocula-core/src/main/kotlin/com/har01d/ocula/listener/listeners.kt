@@ -12,34 +12,25 @@ interface Listener<in T> {
     fun onStart()
     fun onSkip(request: Request)
     fun onDownloadSuccess(request: Request, response: Response)
-    fun onDownloadFailed(request: Request, e: Exception)
+    fun onDownloadFailed(request: Request, e: Throwable)
     fun onCrawlSuccess(request: Request, response: Response)
-    fun onCrawlFailed(request: Request, e: Exception)
+    fun onCrawlFailed(request: Request, e: Throwable)
     fun onParseSuccess(request: Request, response: Response, result: T)
-    fun onParseFailed(request: Request, response: Response, e: Exception)
-    fun onError(e: Exception)
+    fun onParseFailed(request: Request, response: Response, e: Throwable)
+    fun onError(e: Throwable)
     fun onFinish()
 }
 
 abstract class AbstractListener<T> : Listener<T> {
     override fun onStart() {}
-
     override fun onSkip(request: Request) {}
-
     override fun onDownloadSuccess(request: Request, response: Response) {}
-
-    override fun onDownloadFailed(request: Request, e: Exception) {}
-
+    override fun onDownloadFailed(request: Request, e: Throwable) {}
     override fun onCrawlSuccess(request: Request, response: Response) {}
-
-    override fun onCrawlFailed(request: Request, e: Exception) {}
-
+    override fun onCrawlFailed(request: Request, e: Throwable) {}
     override fun onParseSuccess(request: Request, response: Response, result: T) {}
-
-    override fun onParseFailed(request: Request, response: Response, e: Exception) {}
-
-    override fun onError(e: Exception) {}
-
+    override fun onParseFailed(request: Request, response: Response, e: Throwable) {}
+    override fun onError(e: Throwable) {}
     override fun onFinish() {}
 }
 
@@ -78,7 +69,7 @@ class StatisticListener : AbstractListener<Any?>() {
         parsed++
     }
 
-    override fun onError(e: Exception) {
+    override fun onError(e: Throwable) {
         errors++
     }
 
@@ -116,7 +107,7 @@ object LogListener : AbstractListener<Any?>() {
         logger.info("Download ${request.url} success, ${response.time} ms")
     }
 
-    override fun onDownloadFailed(request: Request, e: Exception) {
+    override fun onDownloadFailed(request: Request, e: Throwable) {
         logger.warn("Download ${request.url} failed")
     }
 
@@ -124,7 +115,7 @@ object LogListener : AbstractListener<Any?>() {
         logger.info("Crawl ${request.url} success")
     }
 
-    override fun onCrawlFailed(request: Request, e: Exception) {
+    override fun onCrawlFailed(request: Request, e: Throwable) {
         logger.warn("Crawl ${request.url} failed")
     }
 
@@ -132,11 +123,11 @@ object LogListener : AbstractListener<Any?>() {
         logger.info("Parse ${request.url} success")
     }
 
-    override fun onParseFailed(request: Request, response: Response, e: Exception) {
+    override fun onParseFailed(request: Request, response: Response, e: Throwable) {
         logger.warn("Parse ${request.url} failed")
     }
 
-    override fun onError(e: Exception) {
+    override fun onError(e: Throwable) {
         logger.warn("Error", e)
     }
 

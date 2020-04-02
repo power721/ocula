@@ -18,7 +18,7 @@ class DoubanBookCrawler : AbstractCrawler() {
             follow(response, it.attr("href"))
         }
 
-        crawl(response.select(".next a", "href"))
+        crawl(response, response.select(".next a", "href"))
     }
 }
 

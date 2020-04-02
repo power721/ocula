@@ -16,7 +16,7 @@ class QQCourseCrawler : AbstractCrawler() {
         println("handle " + response.url)
         response.links().forEach { url ->
             if (url.matches("(https:)?//ke.qq.com/course/list.*".toRegex()) || url.startsWith("/course/list")) {
-                crawl(url)
+                crawl(response, url)
             } else if (url.matches("(https:)?//ke.qq.com/course/\\d+.*".toRegex())) {
                 follow(response, url.path())
             }

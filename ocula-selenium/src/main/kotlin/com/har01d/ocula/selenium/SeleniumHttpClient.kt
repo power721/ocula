@@ -17,8 +17,8 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
 
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
-        val webDriver = webDriverProvider.take()
         logger.debug("[Request] handle ${request.url}")
+        val webDriver = webDriverProvider.take()
         try {
             val options = webDriver.manage()
             for (entry in request.cookies) {
@@ -39,6 +39,38 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
                     contentLength = content.length.toLong(),
                     time = System.currentTimeMillis() - start
             )
+        } finally {
+            webDriverProvider.release(webDriver)
+        }
+    }
+
+    override fun dispatch(request: Request, handler: (result: Result<Response>) -> Unit) {
+        val start = System.currentTimeMillis()
+        logger.debug("[Request] handle ${request.url}")
+        val webDriver = webDriverProvider.take()
+        try {
+            val options = webDriver.manage()
+            for (entry in request.cookies) {
+                val cookie = Cookie(entry.name, entry.value)
+                options.addCookie(cookie)
+            }
+            webDriver[request.url]
+
+            actionHandler?.handle(request, webDriver)
+
+            val webElement = webDriver.findElement(By.xpath("/html"))
+            val content = webElement.getAttribute("outerHTML")
+            options.deleteAllCookies()
+            val response = Response(
+                    request.url,
+                    content,
+                    200,
+                    contentLength = content.length.toLong(),
+                    time = System.currentTimeMillis() - start
+            )
+            handler(Result.success(response))
+        } catch (e: Exception) {
+            handler(Result.failure(e))
         } finally {
             webDriverProvider.release(webDriver)
         }

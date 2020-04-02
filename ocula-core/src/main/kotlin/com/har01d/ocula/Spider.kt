@@ -23,6 +23,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Context {
@@ -109,6 +110,10 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     override fun finish() {
         finished = true
     }
+
+    override fun crawl(refer: String, vararg urls: String) = enqueue(queueCrawler, refer, *urls)
+
+    override fun crawl(refer: String, vararg requests: Request) = enqueue(queueCrawler, refer, *requests)
 
     override fun follow(refer: String, vararg urls: String) = enqueue(queueParser, refer, *urls)
 
@@ -248,7 +253,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                 try {
                     it.handle(request)
                 } catch (e: Exception) {
-                    listeners.forEach { it.onError(e) }
+                    listeners.forEach { l -> l.onError(e) }
                     logger.warn("pre handle failed", e)
                 }
             }
@@ -262,7 +267,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                 try {
                     it.handle(request)
                 } catch (e: Exception) {
-                    listeners.forEach { it.onError(e) }
+                    listeners.forEach { l -> l.onError(e) }
                     logger.warn("post handle failed", e)
                 }
             }
@@ -280,6 +285,8 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         }
     }
 
+    private val count = AtomicInteger(0)
+
     private suspend fun crawl(scope: CoroutineScope) {
         var referer: String? = null
         while (scope.isActive) {
@@ -287,35 +294,35 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
             if (request != null) {
                 try {
                     setHeaders(request, referer)
-                    val response = try {
-                        crawler!!.httpClient!!.dispatch(request)
-                    } catch (e: Exception) {
-                        listeners.forEach { it.onDownloadFailed(request, e) }
-                        throw e
+                    count.incrementAndGet()
+                    crawler!!.httpClient!!.dispatch(request) { result ->
+                        result.onSuccess { response ->
+                            listeners.forEach { it.onDownloadSuccess(request, response) }
+                            try {
+                                crawler!!.handle(request, response)
+                                listeners.forEach { it.onCrawlSuccess(request, response) }
+                            } catch (e: Exception) {
+                                listeners.forEach { it.onCrawlFailed(request, e) }
+                                logger.warn("Crawl page {} failed", request.url, e)
+                            }
+                            count.decrementAndGet()
+                        }
+                        result.onFailure { e ->
+                            listeners.forEach { it.onDownloadFailed(request, e) }
+                            logger.warn("Download page {} failed", request.url, e)
+                            count.decrementAndGet()
+                        }
                     }
                     referer = request.url
-                    listeners.forEach { it.onDownloadSuccess(request, response) }
-
-                    try {
-                        crawler!!.handle(request, response)
-                    } catch (e: Exception) {
-                        listeners.forEach { it.onCrawlFailed(request, e) }
-                        throw e
-                    }
-                    listeners.forEach { it.onCrawlSuccess(request, response) }
 
                     delay(interval)
-
-                    if (!enqueue(queueCrawler, response.url, *crawler!!.candidates.toTypedArray())) {
-                        finish()
-                    }
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
                     logger.warn("Crawl page {} failed", request.url, e)
                 }
             }
 
-            if (finished && queueCrawler.isEmpty()) {
+            if (finished && queueCrawler.isEmpty() && count.get() == 0) {
                 break
             }
         }
@@ -328,42 +335,50 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
             if (request != null) {
                 try {
                     setHeaders(request, referer)
-                    val response = try {
-                        parser.httpClient!!.dispatch(request)
-                    } catch (e: Exception) {
-                        listeners.forEach { it.onDownloadFailed(request, e) }
-                        throw e
-                    }
-                    referer = request.url
-                    listeners.forEach { it.onDownloadSuccess(request, response) }
+                    count.incrementAndGet()
+                    parser.httpClient!!.dispatch(request) { res ->
+                        res.onSuccess { response ->
+                            try {
+                                listeners.forEach { it.onDownloadSuccess(request, response) }
 
-                    val result = try {
-                        parser.parse(request, response)
-                    } catch (e: Exception) {
-                        listeners.forEach { it.onParseFailed(request, response, e) }
-                        throw e
-                    }
-                    listeners.forEach { it.onParseSuccess(request, response, result) }
+                                val result = try {
+                                    parser.parse(request, response)
+                                } catch (e: Exception) {
+                                    listeners.forEach { it.onParseFailed(request, response, e) }
+                                    throw e
+                                }
+                                listeners.forEach { it.onParseSuccess(request, response, result) }
 
-                    resultHandlers.forEach {
-                        try {
-                            it.handle(request, response, result)
-                        } catch (e: Exception) {
-                            listeners.forEach { it.onError(e) }
-                            logger.warn("Handle result failed", e)
+                                resultHandlers.forEach {
+                                    try {
+                                        it.handle(request, response, result)
+                                    } catch (e: Exception) {
+                                        listeners.forEach { l -> l.onError(e) }
+                                        logger.warn("Handle result failed", e)
+                                    }
+                                }
+                            } catch (e: Throwable) {
+                                listeners.forEach { it.onError(e) }
+                                logger.warn("Parse page {} failed", request.url, e)
+                            }
+                            count.decrementAndGet()
+                        }
+                        res.onFailure { e ->
+                            listeners.forEach { it.onDownloadFailed(request, e) }
+                            logger.warn("Download page {} failed", request.url, e)
+                            count.decrementAndGet()
                         }
                     }
+                    referer = request.url
 
                     delay(interval)
-
-                    follow(response.url, *parser.candidates.toTypedArray())
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
-                    logger.warn("Parse page {} failed", request.url, e)
+                    logger.warn("Handle page {} failed", request.url, e)
                 }
             }
 
-            if (finished && queueParser.isEmpty()) {
+            if (finished && queueParser.isEmpty() && count.get() == 0) {
                 break
             }
         }

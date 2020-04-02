@@ -27,11 +27,6 @@ open class SeleniumSpider<T>(parser: Parser<T>, configure: SeleniumSpider<T>.() 
         this.configure()
     }
 
-    override fun prepare() {
-        concurrency = 1
-        super.prepare()
-    }
-
     override fun initHttpClient() {
         val size = if (httpProxies.size > 0) httpProxies.size else 1
         webDriverProvider = webDriverProvider

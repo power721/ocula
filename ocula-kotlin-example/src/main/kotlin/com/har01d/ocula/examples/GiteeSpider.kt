@@ -22,7 +22,7 @@ class GiteeCrawler : AbstractCrawler() {
         if (next.isEmpty()) {
             finish()
         } else {
-            crawl(next)
+            crawl(response, next)
         }
     }
 }
@@ -34,10 +34,10 @@ class GiteeSearchCrawler : AbstractCrawler() {
         }
 
         val next = response.select(".next a", "href")
-        if (next.isEmpty()) {
+        if (next.isEmpty() || next == "###") {
             finish()
         } else {
-            crawl(next)
+            crawl(response, next)
         }
     }
 }

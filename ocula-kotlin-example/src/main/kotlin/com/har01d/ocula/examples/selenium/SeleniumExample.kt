@@ -23,7 +23,7 @@ class CourseCrawler : AbstractCrawler() {
             finish()
         } else {
             val current = response.select(".th-bk-main").text().toInt()
-            crawl("?pageIndex=" + (current + 1))
+            crawl(response, "?pageIndex=" + (current + 1))
         }
     }
 }

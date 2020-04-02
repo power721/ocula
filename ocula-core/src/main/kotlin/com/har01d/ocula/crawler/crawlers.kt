@@ -8,32 +8,30 @@ import com.har01d.ocula.http.Response
 interface Crawler {
     var context: Context
     var httpClient: HttpClient?
-    val candidates: List<Request>
     fun handle(request: Request, response: Response)
 }
 
 abstract class AbstractCrawler : Crawler {
     override lateinit var context: Context
     override var httpClient: HttpClient? = null
-    override val candidates: MutableList<Request> = mutableListOf()
 
-    fun follow(response: Response, href: String) {
-        context.follow(response.url, href)
+    fun crawl(response: Response, vararg urls: String): Boolean {
+        val result = context.crawl(response.url, *urls)
+        if (!result) {
+            context.finish()
+        }
+        return result
     }
 
-    fun follow(response: Response, request: Request) {
-        context.follow(response.url, request)
+    fun crawl(response: Response, vararg requests: Request): Boolean {
+        val result = context.crawl(response.url, *requests)
+        if (!result) {
+            context.finish()
+        }
+        return result
     }
 
-    fun crawl(next: String) {
-        candidates += Request(next)
-    }
-
-    fun crawl(next: Request) {
-        candidates += next
-    }
-
-    fun finish() {
-        context.finish()
-    }
+    fun follow(response: Response, href: String) = context.follow(response.url, href)
+    fun follow(response: Response, request: Request) = context.follow(response.url, request)
+    fun finish() = context.finish()
 }
