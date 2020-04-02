@@ -18,7 +18,12 @@ class GiteeCrawler : AbstractCrawler() {
             follow(response, it["href"])
         }
 
-        crawl(response.select("a[rel=next]", "href"))
+        val next = response.select("a[rel=next]", "href")
+        if (next.isEmpty()) {
+            finish()
+        } else {
+            crawl(next)
+        }
     }
 }
 
@@ -28,7 +33,12 @@ class GiteeSearchCrawler : AbstractCrawler() {
             follow(response, it["href"])
         }
 
-        crawl(response.select(".next a", "href"))
+        val next = response.select(".next a", "href")
+        if (next.isEmpty()) {
+            finish()
+        } else {
+            crawl(next)
+        }
     }
 }
 
