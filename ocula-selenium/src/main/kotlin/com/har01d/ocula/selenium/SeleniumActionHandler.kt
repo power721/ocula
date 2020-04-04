@@ -11,7 +11,7 @@ interface SeleniumActionHandler {
     fun handle(request: Request, webDriver: WebDriver)
 }
 
-class LoadAll(private val sleep: Long = 1000L) : SeleniumActionHandler {
+open class LoadAll(private val sleep: Long = 1000L) : SeleniumActionHandler {
     override fun handle(request: Request, webDriver: WebDriver) {
         val executor = webDriver as JavascriptExecutor
         var height = executor.executeScript("return document.body.scrollHeight")

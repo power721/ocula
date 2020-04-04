@@ -185,6 +185,10 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     override fun dispatch(request: Request) = httpClient!!.dispatch(request)
 
     fun run() = runBlocking {
+        start()
+    }
+
+    suspend fun start() {
         validate()
         prepare()
 
@@ -196,7 +200,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
             enqueue(queueCrawler)
 
             crawler!!.context = this@Spider
-            launch(coroutineContext) {
+            GlobalScope.plus(coroutineContext).launch {
                 crawl(this)
             }
         } else {
@@ -205,11 +209,13 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
         parser.context = this@Spider
         val jobs = mutableListOf<Job>()
-        repeat(concurrency) {
-            val job = launch(coroutineContext) {
-                parse(this)
+        coroutineScope {
+            repeat(concurrency) {
+                val job = launch(coroutineContext) {
+                    parse(this)
+                }
+                jobs += job
             }
-            jobs += job
         }
         jobs.forEach { it.join() }
 
