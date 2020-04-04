@@ -3,11 +3,9 @@ package com.har01d.ocula.listener
 import com.har01d.ocula.Spider
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 interface Listener<in T> {
     fun onStart()
@@ -40,7 +38,7 @@ abstract class AbstractListener<T> : Listener<T> {
 class StatisticListener : AbstractListener<Any?>() {
     lateinit var spider: Spider<*>
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
-    private lateinit var executor: ScheduledExecutorService
+    private lateinit var job: Job
     private var skipped = 0
     private var downloaded = 0
     private var crawled = 0
@@ -50,8 +48,12 @@ class StatisticListener : AbstractListener<Any?>() {
 
     override fun onStart() {
         startTime = System.currentTimeMillis()
-        executor = Executors.newSingleThreadScheduledExecutor()
-        executor.scheduleAtFixedRate({ log() }, 30, 30, TimeUnit.SECONDS)
+        job = GlobalScope.launch {
+            while (isActive) {
+                delay(30000)
+                log()
+            }
+        }
     }
 
     override fun onSkip(request: Request) {
@@ -75,12 +77,12 @@ class StatisticListener : AbstractListener<Any?>() {
     }
 
     override fun onCancel() {
-        executor.shutdown()
-        log(true)
+        job.cancel()
+        log()
     }
 
     override fun onFinish() {
-        executor.shutdown()
+        job.cancel()
         log(true)
     }
 
