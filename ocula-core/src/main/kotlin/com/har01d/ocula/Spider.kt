@@ -11,8 +11,6 @@ import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.parser.SimpleParser
 import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
-import com.har01d.ocula.util.defaultHttpHeaders
-import com.har01d.ocula.util.defaultUserAgents
 import com.har01d.ocula.util.normalizeUrl
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
@@ -22,13 +20,12 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
-import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 
-open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Context {
+open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Config(), Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
 
@@ -44,9 +41,9 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     }
 
     val requests = mutableListOf<Request>()
-    var userAgents: List<String> = defaultUserAgents
+    var userAgents: List<String> = http.defaultUserAgents
     var userAgentProvider: UserAgentProvider? = null
-    var httpHeaders: Map<String, Collection<String>> = defaultHttpHeaders
+    var httpHeaders: Map<String, Collection<String>> = http.defaultHttpHeaders
     val httpProxies = mutableListOf<HttpProxy>()
     var proxyProvider: ProxyProvider? = null
     var authHandler: AuthHandler? = null
@@ -60,9 +57,6 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = InMemoryRequestQueue()
     var crawler: Crawler? = null
-    var charset: Charset = Charsets.UTF_8
-    var interval: Long = 500L
-    var concurrency: Int = 0
     var status: Status = Status.IDLE
         private set
     private var _name: String? = null
@@ -119,13 +113,6 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
     fun httpProxy(hostname: String, port: Int) {
         httpProxies += HttpProxy(hostname, port)
-    }
-
-    fun downloadImages(directory: String) {
-        val handler = ImageResultHandler(directory)
-        resultHandlers += handler
-        run()
-        logger.info("downloaded ${handler.count} images")
     }
 
     override fun crawl(refer: String, vararg urls: String) = enqueue(queueCrawler, refer, *urls)
@@ -282,7 +269,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
             val client = crawler!!.httpClient!!
             client.userAgentProvider = userAgentProvider!!
             client.proxyProvider = proxyProvider!!
-            client.charset = charset
+            client.charset = http.charset
         }
 
         if (parser.httpClient == null) {
@@ -291,7 +278,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         val client = parser.httpClient!!
         client.userAgentProvider = userAgentProvider!!
         client.proxyProvider = proxyProvider!!
-        client.charset = charset
+        client.charset = http.charset
     }
 
     open fun preHandle() {

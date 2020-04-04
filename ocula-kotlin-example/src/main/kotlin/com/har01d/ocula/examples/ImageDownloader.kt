@@ -1,13 +1,10 @@
 package com.har01d.ocula.examples
 
 import com.har01d.ocula.SimpleSpider
-import com.har01d.ocula.extension.JueJinImageUploader
-import com.har01d.ocula.extension.NeteaseImageUploader
-import com.har01d.ocula.extension.SouHuImageUploader
-import com.har01d.ocula.extension.TouTiaoImageUploader
 import com.har01d.ocula.handler.ResultHandler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
+import com.har01d.ocula.image.*
 import com.har01d.ocula.selector.get
 import com.har01d.ocula.util.normalizeUrl
 

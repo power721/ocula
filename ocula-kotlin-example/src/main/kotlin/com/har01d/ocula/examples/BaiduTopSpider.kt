@@ -17,7 +17,7 @@ fun main() {
             }
         }
         list
-    }.apply { charset = Charset.forName("gb2312") }.run()
+    }.apply { http.charset = Charset.forName("gb2312") }.run()
 }
 
 data class Top(val title: String, val url: String, val search: Int)

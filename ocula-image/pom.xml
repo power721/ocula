@@ -10,7 +10,7 @@
         <version>0.1</version>
     </parent>
 
-    <artifactId>ocula-extension</artifactId>
+    <artifactId>ocula-image</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
