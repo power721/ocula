@@ -6,6 +6,7 @@ import com.har01d.ocula.http.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 interface Listener<in T> {
@@ -18,6 +19,7 @@ interface Listener<in T> {
     fun onParseSuccess(request: Request, response: Response, result: T)
     fun onParseFailed(request: Request, response: Response, e: Throwable)
     fun onError(e: Throwable)
+    fun onCancel()
     fun onFinish()
 }
 
@@ -31,6 +33,7 @@ abstract class AbstractListener<T> : Listener<T> {
     override fun onParseSuccess(request: Request, response: Response, result: T) {}
     override fun onParseFailed(request: Request, response: Response, e: Throwable) {}
     override fun onError(e: Throwable) {}
+    override fun onCancel() {}
     override fun onFinish() {}
 }
 
@@ -38,6 +41,7 @@ class StatisticListener : AbstractListener<Any?>() {
     lateinit var spider: Spider<*>
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
     private val executor = Executors.newSingleThreadScheduledExecutor()
+    private lateinit var future: ScheduledFuture<*>
     private var skipped = 0
     private var downloaded = 0
     private var crawled = 0
@@ -47,7 +51,7 @@ class StatisticListener : AbstractListener<Any?>() {
 
     override fun onStart() {
         startTime = System.currentTimeMillis()
-        executor.scheduleAtFixedRate({ log() }, 30, 30, TimeUnit.SECONDS)
+        future = executor.scheduleAtFixedRate({ log() }, 30, 30, TimeUnit.SECONDS)
     }
 
     override fun onSkip(request: Request) {
@@ -70,8 +74,13 @@ class StatisticListener : AbstractListener<Any?>() {
         errors++
     }
 
+    override fun onCancel() {
+        future.cancel(true)
+        log(true)
+    }
+
     override fun onFinish() {
-        executor.shutdown()
+        future.cancel(true)
         log(true)
     }
 

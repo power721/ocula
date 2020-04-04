@@ -63,8 +63,11 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     var charset: Charset = Charsets.UTF_8
     var interval: Long = 500L
     var concurrency: Int = 0
+    var status: Status = Status.IDLE
+        private set
     private var _name: String? = null
     private var finished = false
+    private var stoped = false
     private lateinit var coroutineContext: CoroutineContext
 
     constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
@@ -125,10 +128,6 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         logger.info("downloaded ${handler.count} images")
     }
 
-    override fun finish() {
-        finished = true
-    }
-
     override fun crawl(refer: String, vararg urls: String) = enqueue(queueCrawler, refer, *urls)
 
     override fun crawl(refer: String, vararg requests: Request) = enqueue(queueCrawler, refer, *requests)
@@ -184,6 +183,17 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
     override fun dispatch(request: Request) = httpClient!!.dispatch(request)
 
+    override fun finish() {
+        finished = true
+    }
+
+    fun stop() {
+        stoped = true
+        if (status == Status.STARTED || status == Status.RUNNING) {
+            status = Status.CANCELLED
+        }
+    }
+
     fun run() = runBlocking {
         start()
     }
@@ -192,23 +202,25 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         validate()
         prepare()
 
-        logger.info("Spider ${getName()} start")
+        logger.info("Spider ${getName()} Started")
         listeners.forEach { it.onStart() }
         preHandle()
+
+        val jobs = mutableListOf<Job>()
 
         if (crawler != null) {
             enqueue(queueCrawler)
 
             crawler!!.context = this@Spider
-            GlobalScope.plus(coroutineContext).launch {
+            val job = GlobalScope.plus(coroutineContext).launch {
                 crawl(this)
             }
+            jobs += job
         } else {
             enqueue(queueParser)
         }
 
         parser.context = this@Spider
-        val jobs = mutableListOf<Job>()
         coroutineScope {
             repeat(concurrency) {
                 val job = launch(coroutineContext) {
@@ -220,17 +232,27 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         jobs.forEach { it.join() }
 
         postHandle()
-        listeners.forEach { it.onFinish() }
-        logger.info("Spider ${getName()} finished")
+        if (status == Status.CANCELLED) {
+            listeners.forEach { it.onCancel() }
+        } else {
+            listeners.forEach { it.onFinish() }
+        }
+        logger.info("Spider ${getName()} " + status.name.toLowerCase().capitalize())
     }
 
     open fun validate() {
+        if (status == Status.STARTED || status == Status.RUNNING) {
+            throw IllegalStateException("Spider is " + status.name.toLowerCase().capitalize())
+        }
         if (requests.isEmpty()) {
             throw IllegalStateException("start url is required")
         }
     }
 
     open fun prepare() {
+        finished = false
+        stoped = false
+        status = Status.STARTED
         if (concurrency == 0) {
             concurrency = if (crawler != null) {
                 Runtime.getRuntime().availableProcessors()
@@ -298,6 +320,9 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                 }
             }
         }
+        if (status == Status.RUNNING) {
+            status = Status.COMPLETED
+        }
     }
 
     open fun setHeaders(request: Request, referer: String?) {
@@ -315,6 +340,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
     private suspend fun crawl(scope: CoroutineScope) {
         var referer: String? = null
+        status = Status.RUNNING
         while (scope.isActive) {
             val request = queueCrawler.poll(1000L)
             if (request != null) {
@@ -350,7 +376,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                 }
             }
 
-            if (finished && queueCrawler.isEmpty() && count.get() == 0) {
+            if (stoped || (finished && queueCrawler.isEmpty() && count.get() == 0)) {
                 break
             }
         }
@@ -358,6 +384,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
     private suspend fun parse(scope: CoroutineScope) {
         var referer: String? = null
+        status = Status.RUNNING
         while (scope.isActive) {
             val request = queueParser.poll(1000L)
             if (request != null) {
@@ -407,7 +434,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                 }
             }
 
-            if (finished && queueParser.isEmpty() && count.get() == 0) {
+            if (stoped || (finished && queueParser.isEmpty() && count.get() == 0)) {
                 break
             }
         }
@@ -415,3 +442,12 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 }
 
 class SimpleSpider<T>(vararg url: String, parse: (request: Request, response: Response) -> T) : Spider<T>(SimpleParser(parse), *url)
+
+enum class Status {
+    IDLE,
+    STARTED,
+    RUNNING,
+    ABORTED,
+    CANCELLED,
+    COMPLETED
+}
