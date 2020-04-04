@@ -8,6 +8,7 @@ open class Config {
     var interval: Long = 500L
 
     class Http {
+        var base = ""
         var charset: Charset = Charsets.UTF_8
         var timeout = 30000
 

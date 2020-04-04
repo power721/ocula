@@ -7,19 +7,18 @@ import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.parser.SimpleParser
 
-open class SeleniumSpider<T>(parser: Parser<T>, configure: SeleniumSpider<T>.() -> Unit = {}) : Spider<T>(parser) {
+open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, configure: SeleniumSpider<T>.() -> Unit = {}) : Spider<T>(crawler, parser) {
     var driverType: DriverType = DriverType.CHROME
     var headless: Boolean = true
     var phantomjsExecPath: String? = null
     var webDriverProvider: WebDriverProvider? = null
     var actionHandler: SeleniumActionHandler? = null
 
-    constructor(parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(parser, configure) {
+    constructor(parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(null, parser, configure) {
         requests += urls.map { Request(it) }
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(parser, configure) {
-        this.crawler = crawler
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(crawler, parser, configure) {
         requests += urls.map { Request(it) }
     }
 

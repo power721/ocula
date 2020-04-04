@@ -91,7 +91,7 @@ class StatisticListener : AbstractListener<Any?>() {
         val size1 = spider.queueCrawler.size()
         val size2 = spider.queueParser.size()
         val queue = if (!finished) {
-            if (spider.crawler != null) " Queue: $size1-$size2 " else " Queue: $size2 "
+            " Queue: $size1-$size2 "
         } else {
             ""
         }

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 
-open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Config(), Context {
+open class Spider<T>(private val crawler: Crawler? = null, private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Config(), Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
 
@@ -56,7 +56,6 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     var dedupHandler: DedupHandler = HashSetDedupHandler()
     var queueParser: RequestQueue = InMemoryRequestQueue()
     var queueCrawler: RequestQueue = InMemoryRequestQueue()
-    var crawler: Crawler? = null
     var status: Status = Status.IDLE
         private set
     override lateinit var name: String
@@ -64,16 +63,11 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     private var stoped = false
     private lateinit var coroutineContext: CoroutineContext
 
-    constructor(crawler: Crawler, parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
-        this.crawler = crawler
-    }
-
-    constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
+    constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(null, parser, configure) {
         requests += urls.map { Request(it) }
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
-        this.crawler = crawler
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(crawler, parser, configure) {
         requests += urls.map { Request(it) }
     }
 
@@ -188,7 +182,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         if (crawler != null) {
             enqueue(queueCrawler)
 
-            crawler!!.context = this@Spider
+            crawler.context = this@Spider
             val job = GlobalScope.plus(coroutineContext).launch {
                 crawl(this)
             }
@@ -256,10 +250,10 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     open fun initHttpClient() {
         httpClient = httpClient ?: FuelHttpClient()
         crawler?.let {
-            if (crawler!!.httpClient == null) {
-                crawler!!.httpClient = httpClient
+            if (crawler.httpClient == null) {
+                crawler.httpClient = httpClient
             }
-            val client = crawler!!.httpClient!!
+            val client = crawler.httpClient!!
             client.userAgentProvider = userAgentProvider!!
             client.proxyProvider = proxyProvider!!
             client.charset = http.charset
@@ -331,7 +325,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
                         result.onSuccess { response ->
                             listeners.forEach { it.onDownloadSuccess(request, response) }
                             try {
-                                crawler!!.handle(request, response)
+                                crawler.handle(request, response)
                                 listeners.forEach { it.onCrawlSuccess(request, response) }
                             } catch (e: Exception) {
                                 listeners.forEach { it.onCrawlFailed(request, e) }
