@@ -64,6 +64,10 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     private var stoped = false
     private lateinit var coroutineContext: CoroutineContext
 
+    constructor(crawler: Crawler, parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
+        this.crawler = crawler
+    }
+
     constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(parser, configure) {
         requests += urls.map { Request(it) }
     }
