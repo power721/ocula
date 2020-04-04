@@ -95,7 +95,7 @@ class StatisticListener : AbstractListener<Any?>() {
         } else {
             ""
         }
-        val name = spider.getName()
+        val name = spider.name
         logger.info("$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
                 "Skipped pages: $skipped $queue Errors: $errors  Time: ${time}s")
     }

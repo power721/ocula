@@ -59,7 +59,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
     var crawler: Crawler? = null
     var status: Status = Status.IDLE
         private set
-    private var _name: String? = null
+    override lateinit var name: String
     private var finished = false
     private var stoped = false
     private lateinit var coroutineContext: CoroutineContext
@@ -79,20 +79,6 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
 
     init {
         this.configure()
-    }
-
-    override fun getName(): String {
-        if (_name != null) {
-            return _name!!
-        }
-        if (requests.isNotEmpty()) {
-            return URL(requests[0].url).host
-        }
-        return this.javaClass.canonicalName
-    }
-
-    fun setName(name: String) {
-        this._name = name
     }
 
     fun addUrl(url: String) {
@@ -193,7 +179,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         validate()
         prepare()
 
-        logger.info("Spider ${getName()} Started")
+        logger.info("Spider $name Started")
         listeners.forEach { it.onStart() }
         preHandle()
 
@@ -228,7 +214,7 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         } else {
             listeners.forEach { it.onFinish() }
         }
-        logger.info("Spider ${getName()} " + status.name.toLowerCase().capitalize())
+        logger.info("Spider $name " + status.name.toLowerCase().capitalize())
     }
 
     open fun validate() {
@@ -244,6 +230,9 @@ open class Spider<T>(private val parser: Parser<T>, configure: Spider<T>.() -> U
         finished = false
         stoped = false
         status = Status.STARTED
+        if (!this::name.isInitialized) {
+            name = URL(requests[0].url).host
+        }
         if (concurrency == 0) {
             concurrency = if (crawler != null) {
                 Runtime.getRuntime().availableProcessors()
