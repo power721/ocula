@@ -13,5 +13,6 @@
         <module>ocula-core</module>
         <module>ocula-image</module>
         <module>ocula-selenium</module>
+        <module>ocula-extension</module>
     </modules>
 </project>
