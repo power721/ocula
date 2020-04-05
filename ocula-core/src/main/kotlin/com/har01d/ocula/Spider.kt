@@ -252,12 +252,18 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             if (queue is Listener) listeners += queue as Listener
             if (dedupHandler is Listener) listeners += dedupHandler as Listener
         }
-        http.robotsHandler.init(requests)
+        with(http.robotsHandler) {
+            if (this is Listener) listeners += this as Listener
+            init(requests)
+        }
         authHandler?.let {
             preHandlers += authHandler!!
+            if (authHandler is Listener) listeners += authHandler as Listener
         }
-        http.userAgentProvider = http.userAgentProvider ?: RoundRobinUserAgentProvider(http.userAgents)
-        http.proxyProvider = http.proxyProvider ?: RoundRobinProxyProvider(http.proxies)
+        with(http) {
+            userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
+            proxyProvider = proxyProvider ?: RoundRobinProxyProvider(proxies)
+        }
         initHttpClient()
     }
 
