@@ -23,14 +23,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
     }
 
+    override lateinit var name: String
     val requests = mutableListOf<Request>()
-    var userAgents: List<String> = http.defaultUserAgents
-    var userAgentProvider: UserAgentProvider? = null
-    var httpHeaders: Map<String, Collection<String>> = http.defaultHttpHeaders
-    val httpProxies = mutableListOf<HttpProxy>()
-    var proxyProvider: ProxyProvider? = null
-    var authHandler: AuthHandler? = null
-    var robotsHandler: RobotsHandler = NoopRobotsHandler
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
@@ -38,7 +32,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     lateinit var httpClient: HttpClient
     var status: Status = Status.IDLE
         private set
-    override lateinit var name: String
+
     private var finished = false
     private var stoped = false
     private lateinit var coroutineContext: CoroutineContext
@@ -55,28 +49,14 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         this.configure()
     }
 
-    fun addUrl(url: String) {
-        requests += Request(url)
+    fun addUrl(vararg url: String) {
+        url.forEach {
+            requests += Request(it)
+        }
     }
 
-    fun basicAuth(username: String, password: String) {
-        authHandler = BasicAuthHandler(username, password)
-    }
-
-    fun cookieAuth(name: String, value: String) {
-        authHandler = CookieAuthHandler(name, value)
-    }
-
-    fun tokenAuth(token: String, header: String = "Authorization") {
-        authHandler = TokenAuthHandler(token, header)
-    }
-
-    fun formAuth(actionUrl: String, parameters: Parameters, block: (request: Request, response: Response) -> Unit = sessionHandler) {
-        authHandler = FormAuthHandler(actionUrl, parameters, block)
-    }
-
-    fun httpProxy(hostname: String, port: Int) {
-        httpProxies += HttpProxy(hostname, port)
+    fun addRequest(vararg request: Request) {
+        requests += request
     }
 
     override fun crawl(refer: String, vararg urls: String) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *urls)
@@ -102,7 +82,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             if (uri != null) {
                 request.headers["Referer"] = listOf(refer)
                 val req = request.copy(url = uri)
-                if (!robotsHandler.handle(req)) {
+                if (!http.robotsHandler.handle(req)) {
                     listeners.forEach { it.onSkip(req) }
                     logger.debug("Skip {}", req.url)
                     continue
@@ -224,12 +204,12 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         }
         parser.queue = parser.queue ?: InMemoryRequestQueue()
         parser.dedupHandler = parser.dedupHandler ?: HashSetDedupHandler()
-        robotsHandler.init(requests)
+        http.robotsHandler.init(requests)
         authHandler?.let {
             preHandlers += authHandler!!
         }
-        userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
-        proxyProvider = proxyProvider ?: RoundRobinProxyProvider(httpProxies)
+        http.userAgentProvider = http.userAgentProvider ?: RoundRobinUserAgentProvider(http.userAgents)
+        http.proxyProvider = http.proxyProvider ?: RoundRobinProxyProvider(http.proxies)
         initHttpClient()
     }
 
@@ -240,15 +220,15 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         crawler?.let {
             it.httpClient = it.httpClient ?: httpClient
             val client = it.httpClient!!
-            client.userAgentProvider = userAgentProvider!!
-            client.proxyProvider = proxyProvider!!
+            client.userAgentProvider = http.userAgentProvider!!
+            client.proxyProvider = http.proxyProvider!!
             client.charset = http.charset
         }
 
         parser.httpClient = parser.httpClient ?: httpClient
         val client = parser.httpClient!!
-        client.userAgentProvider = userAgentProvider!!
-        client.proxyProvider = proxyProvider!!
+        client.userAgentProvider = http.userAgentProvider!!
+        client.proxyProvider = http.proxyProvider!!
         client.charset = http.charset
     }
 
@@ -287,7 +267,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         if (referer != null && !request.headers.containsKey("Referer")) {
             request.headers["Referer"] = listOf(referer)
         }
-        for (entry in httpHeaders) {
+        for (entry in http.headers) {
             if (!request.headers.containsKey(entry.key)) {
                 request.headers[entry.key] = entry.value
             }

@@ -2,6 +2,8 @@ package com.har01d.ocula
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.har01d.ocula.handler.*
+import com.har01d.ocula.http.*
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
@@ -25,13 +27,30 @@ open class Config {
     val http = Http()
     var concurrency: Int = 0
     var interval: Long = 500L
+    var authHandler: AuthHandler? = null
+
+    fun basicAuth(username: String, password: String) {
+        authHandler = BasicAuthHandler(username, password)
+    }
+
+    fun cookieAuth(name: String, value: String) {
+        authHandler = CookieAuthHandler(name, value)
+    }
+
+    fun tokenAuth(token: String, header: String = "Authorization") {
+        authHandler = TokenAuthHandler(token, header)
+    }
+
+    fun formAuth(actionUrl: String, parameters: Parameters, block: (request: Request, response: Response) -> Unit = sessionHandler) {
+        authHandler = FormAuthHandler(actionUrl, parameters, block)
+    }
+
+    fun httpProxy(hostname: String, port: Int) {
+        http.proxies += HttpProxy(hostname, port)
+    }
 
     class Http {
-        var base = ""
-        var charset: Charset = Charsets.UTF_8
-        var timeout = 30000
-
-        val defaultUserAgents = listOf(
+        private val defaultUserAgents = listOf(
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36",
                 "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0",
                 "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.1b3) Gecko/20090305 Firefox/3.1b3 GTB5",
@@ -58,10 +77,21 @@ open class Config {
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
         )
 
-        val defaultHttpHeaders = mapOf(
+        private val defaultHttpHeaders = mapOf(
                 "Accept" to listOf("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"),
                 "Accept-Encoding" to listOf("gzip, deflate"),  // do not support br
                 "Accept-Language" to listOf("en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,ja;q=0.6,zh-TW;q=0.5")
         )
+
+        var base = ""
+        var charset: Charset = Charsets.UTF_8
+        var timeout = 30000
+
+        var userAgents: List<String> = defaultUserAgents
+        var userAgentProvider: UserAgentProvider? = null
+        var headers: Map<String, Collection<String>> = defaultHttpHeaders
+        val proxies = mutableListOf<HttpProxy>()
+        var proxyProvider: ProxyProvider? = null
+        var robotsHandler: RobotsHandler = NoopRobotsHandler
     }
 }

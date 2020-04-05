@@ -15,11 +15,11 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
     var actionHandler: SeleniumActionHandler? = null
 
     constructor(parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(null, parser, configure) {
-        requests += urls.map { Request(it) }
+        addUrl(*urls)
     }
 
     constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(crawler, parser, configure) {
-        requests += urls.map { Request(it) }
+        addUrl(*urls)
     }
 
     init {
@@ -28,10 +28,10 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
 
     override fun initHttpClient() {
         if (concurrency == 0) {
-            concurrency = if (httpProxies.size > 0) httpProxies.size else 1
+            concurrency = if (http.proxies.size > 0) http.proxies.size else 1
         }
         webDriverProvider = webDriverProvider
-                ?: DefaultWebDriverProvider(concurrency, proxyProvider!!, driverType, headless, phantomjsExecPath)
+                ?: DefaultWebDriverProvider(concurrency, http.proxyProvider!!, driverType, headless, phantomjsExecPath)
         val httpClient = SeleniumHttpClient(webDriverProvider!!)
         httpClient.actionHandler = actionHandler
         this.httpClient = httpClient

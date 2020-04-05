@@ -8,7 +8,7 @@ import com.har01d.ocula.parser.AbstractParser
 
 fun main() {
     Spider(PageParser(), "https://cn.bing.com/") {
-        robotsHandler = DefaultRobotsHandler()
+        http.robotsHandler = DefaultRobotsHandler()
     }.run()
 }
 
