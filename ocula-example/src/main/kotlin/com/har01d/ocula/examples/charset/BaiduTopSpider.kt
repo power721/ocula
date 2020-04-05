@@ -1,4 +1,4 @@
-package com.har01d.ocula.examples
+package com.har01d.ocula.examples.charset
 
 import com.har01d.ocula.SimpleSpider
 import com.har01d.ocula.selector.toInt

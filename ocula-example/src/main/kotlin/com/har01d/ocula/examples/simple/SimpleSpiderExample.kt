@@ -1,4 +1,4 @@
-package com.har01d.ocula.examples
+package com.har01d.ocula.examples.simple
 
 import com.har01d.ocula.SimpleSpider
 import com.har01d.ocula.util.normalizeUrl

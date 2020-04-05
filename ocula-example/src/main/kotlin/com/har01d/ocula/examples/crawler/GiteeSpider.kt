@@ -1,4 +1,4 @@
-package com.har01d.ocula.examples
+package com.har01d.ocula.examples.crawler
 
 import com.har01d.ocula.Spider
 import com.har01d.ocula.crawler.AbstractCrawler

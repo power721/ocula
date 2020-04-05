@@ -2,7 +2,7 @@ package com.har01d.ocula.examples.redis
 
 import com.har01d.ocula.Spider
 import com.har01d.ocula.crawler.AbstractCrawler
-import com.har01d.ocula.examples.QQCourseParser
+import com.har01d.ocula.examples.crawler.QQCourseParser
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.redis.RedisDedupHandler
