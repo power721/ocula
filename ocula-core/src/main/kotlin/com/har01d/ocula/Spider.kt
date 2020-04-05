@@ -28,7 +28,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
-    val listeners = mutableListOf<Listener<T>>(StatisticListener().apply { spider = this@Spider })
+    val listeners = mutableListOf<Listener>(StatisticListener().apply { spider = this@Spider })
     lateinit var httpClient: HttpClient
     var status: Status = Status.IDLE
         private set
@@ -207,8 +207,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         if (status == Status.CANCELLED) {
             listeners.forEach { it.onCancel() }
         } else {
-            listeners.forEach { it.onFinish() }
+            listeners.forEach { it.onComplete() }
         }
+        listeners.forEach { it.onFinish() }
         logger.info("Spider $name " + status.name.toLowerCase().capitalize())
     }
 
@@ -242,9 +243,15 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         crawler?.let {
             it.queue = it.queue ?: InMemoryRequestQueue()
             it.dedupHandler = it.dedupHandler ?: HashSetDedupHandler()
+            if (it.queue is Listener) listeners += it.queue as Listener
+            if (it.dedupHandler is Listener) listeners += it.dedupHandler as Listener
         }
-        parser.queue = parser.queue ?: InMemoryRequestQueue()
-        parser.dedupHandler = parser.dedupHandler ?: HashSetDedupHandler()
+        with(parser) {
+            queue = queue ?: InMemoryRequestQueue()
+            dedupHandler = dedupHandler ?: HashSetDedupHandler()
+            if (queue is Listener) listeners += queue as Listener
+            if (dedupHandler is Listener) listeners += dedupHandler as Listener
+        }
         http.robotsHandler.init(requests)
         authHandler?.let {
             preHandlers += authHandler!!

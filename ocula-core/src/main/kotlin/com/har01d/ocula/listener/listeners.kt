@@ -7,35 +7,37 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-interface Listener<in T> {
+interface Listener {
     fun onStart()
     fun onSkip(request: Request)
     fun onDownloadSuccess(request: Request, response: Response)
     fun onDownloadFailed(request: Request, e: Throwable)
     fun onCrawlSuccess(request: Request, response: Response)
     fun onCrawlFailed(request: Request, e: Throwable)
-    fun onParseSuccess(request: Request, response: Response, result: T)
+    fun <T> onParseSuccess(request: Request, response: Response, result: T)
     fun onParseFailed(request: Request, response: Response, e: Throwable)
     fun onError(e: Throwable)
     fun onCancel()
+    fun onComplete()
     fun onFinish()
 }
 
-abstract class AbstractListener<T> : Listener<T> {
+abstract class AbstractListener : Listener {
     override fun onStart() {}
     override fun onSkip(request: Request) {}
     override fun onDownloadSuccess(request: Request, response: Response) {}
     override fun onDownloadFailed(request: Request, e: Throwable) {}
     override fun onCrawlSuccess(request: Request, response: Response) {}
     override fun onCrawlFailed(request: Request, e: Throwable) {}
-    override fun onParseSuccess(request: Request, response: Response, result: T) {}
+    override fun <T> onParseSuccess(request: Request, response: Response, result: T) {}
     override fun onParseFailed(request: Request, response: Response, e: Throwable) {}
     override fun onError(e: Throwable) {}
     override fun onCancel() {}
+    override fun onComplete() {}
     override fun onFinish() {}
 }
 
-class StatisticListener : AbstractListener<Any?>() {
+class StatisticListener : AbstractListener() {
     lateinit var spider: Spider<*>
     private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
     private lateinit var job: Job
@@ -68,7 +70,7 @@ class StatisticListener : AbstractListener<Any?>() {
         crawled++
     }
 
-    override fun onParseSuccess(request: Request, response: Response, result: Any?) {
+    override fun <T> onParseSuccess(request: Request, response: Response, result: T) {
         parsed++
     }
 
@@ -101,7 +103,7 @@ class StatisticListener : AbstractListener<Any?>() {
     }
 }
 
-object LogListener : AbstractListener<Any?>() {
+object LogListener : AbstractListener() {
     private val logger: Logger = LoggerFactory.getLogger(LogListener::class.java)
 
     override fun onSkip(request: Request) {
@@ -124,7 +126,7 @@ object LogListener : AbstractListener<Any?>() {
         logger.warn("Crawl ${request.url} failed")
     }
 
-    override fun onParseSuccess(request: Request, response: Response, result: Any?) {
+    override fun <T> onParseSuccess(request: Request, response: Response, result: T) {
         logger.info("Parse ${request.url} success")
     }
 

@@ -25,6 +25,9 @@ abstract class AbstractPostHandler : PostHandler {
     override lateinit var context: Context
 }
 
+/**
+ * If this is persisted, the request queue have to persist too.
+ */
 interface DedupHandler {
     fun handle(request: Request): Boolean
 }
