@@ -10,5 +10,6 @@ interface Context {
     fun follow(refer: String, vararg urls: String): Boolean
     fun follow(refer: String, vararg requests: Request): Boolean
     fun dispatch(request: Request): Response
+    fun stop()
     fun finish()
 }

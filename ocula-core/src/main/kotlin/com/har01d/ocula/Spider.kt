@@ -49,29 +49,56 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         this.configure()
     }
 
+    /**
+     * Add initial urls, Spider starts from these urls.
+     */
     fun addUrl(vararg url: String) {
         url.forEach {
             requests += Request(it)
         }
     }
 
+    /**
+     * Add initial requests, Spider starts from these requests.
+     */
     fun addRequest(vararg request: Request) {
         requests += request
     }
 
+    /**
+     * Add urls to the crawler queue.
+     */
     override fun crawl(refer: String, vararg urls: String) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *urls)
 
+    /**
+     * Add requests to the crawler queue.
+     */
     override fun crawl(refer: String, vararg requests: Request) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *requests)
 
+    /**
+     * Add urls to the parser queue.
+     */
     override fun follow(refer: String, vararg urls: String) = enqueue(parser.queue!!, parser.dedupHandler!!, refer, *urls)
 
+    /**
+     * Add requests to the parser queue.
+     */
     override fun follow(refer: String, vararg requests: Request) = enqueue(parser.queue!!, parser.dedupHandler!!, refer, *requests)
 
-    open fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg urls: String): Boolean {
+    /**
+     * Add urls to the queue, will normalize the url by refer URL, check duplication before add them.
+     */
+    private fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg urls: String): Boolean {
         return enqueue(queue, dedupHandler, refer, *urls.map { Request(it) }.toTypedArray())
     }
 
-    open fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg requests: Request): Boolean {
+    /**
+     * Add requests to the queue.
+     * Invalid urls are ignored, eg.: "", "#", "javascript:void(0);".
+     * RobotsHandler checks if the urls can access by robots.txt.
+     * DedupHandler checks if the requests should handle.
+     */
+    private fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg requests: Request): Boolean {
         var success = false
         for (request in requests) {
             val url = request.url
@@ -99,36 +126,46 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         return success
     }
 
-    open fun enqueue(queue: RequestQueue) {
-        requests.forEach {
-            queue.push(it)
-        }
-    }
-
-    open fun validateUrl(url: String): Boolean {
+    private fun validateUrl(url: String): Boolean {
         if (url.isBlank() || url == "#" || url.startsWith("javascript:")) {
             return false
         }
         return true
     }
 
+    /**
+     * Dispatch HTTP request by FuelHttpClient.
+     */
     override fun dispatch(request: Request) = httpClient.dispatch(request)
 
+    /**
+     * Indicate no more new tasks, wait tasks in queue finish.
+     */
     override fun finish() {
         finished = true
     }
 
-    fun stop() {
+    /**
+     * Stop the Spider, ignore the tasks in queue.
+     */
+    override fun stop() {
         stoped = true
+        // TODO: how to stop before RUNNING?
         if (status == Status.STARTED || status == Status.RUNNING) {
             status = Status.CANCELLED
         }
     }
 
+    /**
+     * Start the Spider and block the current thread.
+     */
     fun run() = runBlocking {
         start()
     }
 
+    /**
+     * Start the Spider in coroutine.
+     */
     suspend fun start() {
         validate()
         prepare()
@@ -140,7 +177,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         val jobs = mutableListOf<Job>()
 
         if (crawler != null) {
-            enqueue(crawler.queue!!)
+            requests.forEach {
+                crawler.queue!!.push(it)
+            }
 
             crawler.context = this@Spider
             val job = GlobalScope.plus(coroutineContext).launch {
@@ -148,7 +187,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             }
             jobs += job
         } else {
-            enqueue(parser.queue!!)
+            requests.forEach {
+                parser.queue!!.push(it)
+            }
         }
 
         parser.context = this@Spider
