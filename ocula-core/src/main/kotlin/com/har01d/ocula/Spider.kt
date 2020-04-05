@@ -35,8 +35,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener<T>>(StatisticListener().apply { spider = this@Spider })
-    var httpClient: HttpClient? = null
-    var dedupHandler: DedupHandler = HashSetDedupHandler()
+    lateinit var httpClient: HttpClient
     var status: Status = Status.IDLE
         private set
     override lateinit var name: String
@@ -80,19 +79,19 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         httpProxies += HttpProxy(hostname, port)
     }
 
-    override fun crawl(refer: String, vararg urls: String) = enqueue(crawler?.queue!!, refer, *urls)
+    override fun crawl(refer: String, vararg urls: String) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *urls)
 
-    override fun crawl(refer: String, vararg requests: Request) = enqueue(crawler?.queue!!, refer, *requests)
+    override fun crawl(refer: String, vararg requests: Request) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *requests)
 
-    override fun follow(refer: String, vararg urls: String) = enqueue(parser.queue!!, refer, *urls)
+    override fun follow(refer: String, vararg urls: String) = enqueue(parser.queue!!, parser.dedupHandler!!, refer, *urls)
 
-    override fun follow(refer: String, vararg requests: Request) = enqueue(parser.queue!!, refer, *requests)
+    override fun follow(refer: String, vararg requests: Request) = enqueue(parser.queue!!, parser.dedupHandler!!, refer, *requests)
 
-    open fun enqueue(queue: RequestQueue, refer: String, vararg urls: String): Boolean {
-        return enqueue(queue, refer, *urls.map { Request(it) }.toTypedArray())
+    open fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg urls: String): Boolean {
+        return enqueue(queue, dedupHandler, refer, *urls.map { Request(it) }.toTypedArray())
     }
 
-    open fun enqueue(queue: RequestQueue, refer: String, vararg requests: Request): Boolean {
+    open fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg requests: Request): Boolean {
         var success = false
         for (request in requests) {
             val url = request.url
@@ -133,7 +132,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         return true
     }
 
-    override fun dispatch(request: Request) = httpClient!!.dispatch(request)
+    override fun dispatch(request: Request) = httpClient.dispatch(request)
 
     override fun finish() {
         finished = true
@@ -221,8 +220,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         }
         crawler?.let {
             it.queue = it.queue ?: InMemoryRequestQueue()
+            it.dedupHandler = it.dedupHandler ?: HashSetDedupHandler()
         }
         parser.queue = parser.queue ?: InMemoryRequestQueue()
+        parser.dedupHandler = parser.dedupHandler ?: HashSetDedupHandler()
         robotsHandler.init(requests)
         authHandler?.let {
             preHandlers += authHandler!!
@@ -233,7 +234,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     open fun initHttpClient() {
-        httpClient = httpClient ?: FuelHttpClient()
+        if (!this::httpClient.isInitialized) {
+            httpClient = FuelHttpClient()
+        }
         crawler?.let {
             it.httpClient = it.httpClient ?: httpClient
             val client = it.httpClient!!
