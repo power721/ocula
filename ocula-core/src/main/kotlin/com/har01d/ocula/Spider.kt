@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 
-open class Spider<T>(private val crawler: Crawler? = null, private val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Config(), Context {
+open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Config(), Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
     }
@@ -37,8 +37,6 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
     val listeners = mutableListOf<Listener<T>>(StatisticListener().apply { spider = this@Spider })
     var httpClient: HttpClient? = null
     var dedupHandler: DedupHandler = HashSetDedupHandler()
-    var queueParser: RequestQueue = InMemoryRequestQueue()
-    var queueCrawler: RequestQueue = InMemoryRequestQueue()
     var status: Status = Status.IDLE
         private set
     override lateinit var name: String
@@ -82,13 +80,13 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
         httpProxies += HttpProxy(hostname, port)
     }
 
-    override fun crawl(refer: String, vararg urls: String) = enqueue(queueCrawler, refer, *urls)
+    override fun crawl(refer: String, vararg urls: String) = enqueue(crawler?.queue!!, refer, *urls)
 
-    override fun crawl(refer: String, vararg requests: Request) = enqueue(queueCrawler, refer, *requests)
+    override fun crawl(refer: String, vararg requests: Request) = enqueue(crawler?.queue!!, refer, *requests)
 
-    override fun follow(refer: String, vararg urls: String) = enqueue(queueParser, refer, *urls)
+    override fun follow(refer: String, vararg urls: String) = enqueue(parser.queue!!, refer, *urls)
 
-    override fun follow(refer: String, vararg requests: Request) = enqueue(queueParser, refer, *requests)
+    override fun follow(refer: String, vararg requests: Request) = enqueue(parser.queue!!, refer, *requests)
 
     open fun enqueue(queue: RequestQueue, refer: String, vararg urls: String): Boolean {
         return enqueue(queue, refer, *urls.map { Request(it) }.toTypedArray())
@@ -163,7 +161,7 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
         val jobs = mutableListOf<Job>()
 
         if (crawler != null) {
-            enqueue(queueCrawler)
+            enqueue(crawler.queue!!)
 
             crawler.context = this@Spider
             val job = GlobalScope.plus(coroutineContext).launch {
@@ -171,7 +169,7 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
             }
             jobs += job
         } else {
-            enqueue(queueParser)
+            enqueue(parser.queue!!)
         }
 
         parser.context = this@Spider
@@ -221,6 +219,10 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
         }
+        crawler?.let {
+            it.queue = it.queue ?: InMemoryRequestQueue()
+        }
+        parser.queue = parser.queue ?: InMemoryRequestQueue()
         robotsHandler.init(requests)
         authHandler?.let {
             preHandlers += authHandler!!
@@ -233,18 +235,14 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
     open fun initHttpClient() {
         httpClient = httpClient ?: FuelHttpClient()
         crawler?.let {
-            if (crawler.httpClient == null) {
-                crawler.httpClient = httpClient
-            }
-            val client = crawler.httpClient!!
+            it.httpClient = it.httpClient ?: httpClient
+            val client = it.httpClient!!
             client.userAgentProvider = userAgentProvider!!
             client.proxyProvider = proxyProvider!!
             client.charset = http.charset
         }
 
-        if (parser.httpClient == null) {
-            parser.httpClient = httpClient
-        }
+        parser.httpClient = parser.httpClient ?: httpClient
         val client = parser.httpClient!!
         client.userAgentProvider = userAgentProvider!!
         client.proxyProvider = proxyProvider!!
@@ -299,12 +297,12 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
         var referer: String? = null
         status = Status.RUNNING
         while (scope.isActive) {
-            val request = queueCrawler.poll(1000L)
+            val request = crawler!!.queue!!.poll(1000L)
             if (request != null) {
                 try {
                     setHeaders(request, referer)
                     count.incrementAndGet()
-                    crawler!!.httpClient!!.dispatch(request) { result ->
+                    crawler.httpClient!!.dispatch(request) { result ->
                         result.onSuccess { response ->
                             listeners.forEach { it.onDownloadSuccess(request, response) }
                             try {
@@ -333,7 +331,7 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
                 }
             }
 
-            if (stoped || (finished && queueCrawler.isEmpty() && count.get() == 0)) {
+            if (stoped || (finished && crawler.queue!!.isEmpty() && count.get() == 0)) {
                 break
             }
         }
@@ -343,7 +341,7 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
         var referer: String? = null
         status = Status.RUNNING
         while (scope.isActive) {
-            val request = queueParser.poll(1000L)
+            val request = parser.queue!!.poll(1000L)
             if (request != null) {
                 try {
                     setHeaders(request, referer)
@@ -391,7 +389,7 @@ open class Spider<T>(private val crawler: Crawler? = null, private val parser: P
                 }
             }
 
-            if (stoped || (finished && queueParser.isEmpty() && count.get() == 0)) {
+            if (stoped || (finished && parser.queue!!.isEmpty() && count.get() == 0)) {
                 break
             }
         }

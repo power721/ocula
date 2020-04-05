@@ -88,10 +88,10 @@ class StatisticListener : AbstractListener<Any?>() {
 
     private fun log(finished: Boolean = false) {
         val time = (System.currentTimeMillis() - startTime) / 1000
-        val size1 = spider.queueCrawler.size()
-        val size2 = spider.queueParser.size()
+        val size1 = spider.crawler?.queue?.size()
+        val size2 = spider.parser.queue!!.size()
         val queue = if (!finished) {
-            " Queue: $size1-$size2 "
+            if (size1 != null) " Queue: $size1-$size2 " else " Queue: $size2 "
         } else {
             ""
         }

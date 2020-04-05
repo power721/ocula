@@ -4,16 +4,19 @@ import com.har01d.ocula.Context
 import com.har01d.ocula.http.HttpClient
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
+import com.har01d.ocula.queue.RequestQueue
 
 interface Crawler {
     var context: Context
     var httpClient: HttpClient?
+    var queue: RequestQueue?
     fun handle(request: Request, response: Response)
 }
 
 abstract class AbstractCrawler : Crawler {
     override lateinit var context: Context
     override var httpClient: HttpClient? = null
+    override var queue: RequestQueue? = null
 
     fun crawl(response: Response, vararg urls: String): Boolean {
         val result = context.crawl(response.url, *urls)
