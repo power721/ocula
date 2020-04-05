@@ -10,16 +10,32 @@
         <version>0.1</version>
     </parent>
 
-    <artifactId>ocula-java-example</artifactId>
+    <artifactId>ocula-example</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kotlin.version>1.3.61</kotlin.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.har01d</groupId>
             <artifactId>ocula-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.har01d</groupId>
+            <artifactId>ocula-selenium</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.har01d</groupId>
+            <artifactId>ocula-image</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.har01d</groupId>
+            <artifactId>ocula-extension</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -35,30 +51,32 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+
         <plugins>
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.har01d.ocula.examples.QuotesSpider</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
                 <executions>
                     <execution>
-                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <id>compile</id>
+                        <phase>compile</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
 </project>
