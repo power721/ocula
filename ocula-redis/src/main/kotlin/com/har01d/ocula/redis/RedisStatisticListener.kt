@@ -35,33 +35,34 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
 
     override fun onStart() {
         startTime = System.currentTimeMillis()
+        map.addAndGetAsync("id", 1)
+        map["startTime"] = startTime.toInt()
         job = GlobalScope.launch {
             while (isActive) {
                 delay(30000)
                 log()
             }
         }
-        map["startTime"] = startTime.toInt()
     }
 
     override fun onSkip(request: Request) {
-        map.addAndGet("skipped", 1)
+        map.addAndGetAsync("skipped", 1)
     }
 
     override fun onDownloadSuccess(request: Request, response: Response) {
-        map.addAndGet("downloaded", 1)
+        map.addAndGetAsync("downloaded", 1)
     }
 
     override fun onCrawlSuccess(request: Request, response: Response) {
-        map.addAndGet("crawled", 1)
+        map.addAndGetAsync("crawled", 1)
     }
 
     override fun <T> onParseSuccess(request: Request, response: Response, result: T) {
-        map.addAndGet("parsed", 1)
+        map.addAndGetAsync("parsed", 1)
     }
 
     override fun onError(e: Throwable) {
-        map.addAndGet("errors", 1)
+        map.addAndGetAsync("errors", 1)
     }
 
     override fun onCancel() {
@@ -74,8 +75,10 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
         log(true)
     }
 
-    override fun onFinish() {
-        map["endTime"] = System.currentTimeMillis().toInt()
+    override fun onShutdown() {
+        val endTime = System.currentTimeMillis()
+        map["endTime"] = endTime.toInt()
+        map.addAndGetAsync("elapsed", (endTime - startTime))
         redisson.shutdown()
     }
 

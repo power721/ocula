@@ -27,7 +27,7 @@ fun <T> Spider<T>.enableRedis(keyPrefix: String, redisson: RedissonClient, inclu
 }
 
 class RedissonListener(private val redisson: RedissonClient) : AbstractListener() {
-    override fun onFinish() {
+    override fun onShutdown() {
         redisson.shutdown()
     }
 }

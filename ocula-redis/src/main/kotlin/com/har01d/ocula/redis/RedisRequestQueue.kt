@@ -49,7 +49,7 @@ class RedisRequestQueue(name: String, connection: String = "redis://127.0.0.1:63
         return size() == 0
     }
 
-    override fun onFinish() {
+    override fun onShutdown() {
         redisson.shutdown()
     }
 }

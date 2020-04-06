@@ -19,7 +19,7 @@ interface Listener {
     fun onError(e: Throwable)
     fun onCancel()
     fun onComplete()
-    fun onFinish()
+    fun onShutdown()
 }
 
 abstract class AbstractListener : Listener {
@@ -34,7 +34,7 @@ abstract class AbstractListener : Listener {
     override fun onError(e: Throwable) {}
     override fun onCancel() {}
     override fun onComplete() {}
-    override fun onFinish() {}
+    override fun onShutdown() {}
 }
 
 abstract class StatisticListener : AbstractListener() {

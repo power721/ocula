@@ -29,7 +29,7 @@ class RedisDedupHandler(name: String, connection: String = "redis://127.0.0.1:63
         return set.add(request.url)
     }
 
-    override fun onFinish() {
+    override fun onShutdown() {
         redisson.shutdown()
     }
 }

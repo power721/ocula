@@ -55,6 +55,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * Add initial urls, Spider starts from these urls.
      */
     fun addUrl(vararg url: String) {
+        if (status == Status.STARTED || status == Status.RUNNING) {
+            logger.warn("Spider $name is $status")
+        }
         url.forEach {
             requests += Request(it)
         }
@@ -64,6 +67,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * Add initial requests, Spider starts from these requests.
      */
     fun addRequest(vararg request: Request) {
+        if (status == Status.STARTED || status == Status.RUNNING) {
+            logger.warn("Spider $name is $status")
+        }
         requests += request
     }
 
@@ -211,13 +217,13 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         } else {
             listeners.forEach { it.onComplete() }
         }
-        listeners.forEach { it.onFinish() }
-        logger.info("Spider $name " + status.name.toLowerCase().capitalize())
+        listeners.forEach { it.onShutdown() }
+        logger.info("Spider $name is $status")
     }
 
     open fun validate() {
         if (status == Status.STARTED || status == Status.RUNNING) {
-            throw IllegalStateException("Spider is " + status.name.toLowerCase().capitalize())
+            throw IllegalStateException("Spider $name is " + status.name.toLowerCase().capitalize())
         }
         if (requests.isEmpty()) {
             throw IllegalStateException("start url is required")
@@ -448,5 +454,9 @@ enum class Status {
     RUNNING,
     ABORTED,
     CANCELLED,
-    COMPLETED
+    COMPLETED;
+
+    override fun toString(): String {
+        return name.toLowerCase().capitalize()
+    }
 }
