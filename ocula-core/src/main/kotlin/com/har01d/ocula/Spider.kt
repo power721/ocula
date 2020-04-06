@@ -350,8 +350,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             val request = crawler!!.queue!!.poll(1000L)
             if (request != null) {
                 try {
-                    setHeaders(request, referer)
                     count.incrementAndGet()
+                    setHeaders(request, referer)
                     crawler.httpClient!!.dispatch(request) { result ->
                         result.onSuccess { response ->
                             listeners.forEach { it.onDownloadSuccess(request, response) }
@@ -381,7 +381,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 }
             }
 
-            if (stoped || (finished && crawler.queue!!.isEmpty() && count.get() == 0)) {
+            if (stoped || (finished && crawler.queue!!.isEmpty() && parser.queue!!.isEmpty() && count.get() == 0)) {
                 break
             }
         }
@@ -394,8 +394,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             val request = parser.queue!!.poll(1000L)
             if (request != null) {
                 try {
-                    setHeaders(request, referer)
                     count.incrementAndGet()
+                    setHeaders(request, referer)
                     parser.httpClient!!.dispatch(request) { res ->
                         res.onSuccess { response ->
                             try {
@@ -439,7 +439,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 }
             }
 
-            if (stoped || (finished && parser.queue!!.isEmpty() && count.get() == 0)) {
+            if (stoped || (finished && (crawler?.queue?.isEmpty() != false) && parser.queue!!.isEmpty() && count.get() == 0)) {
                 break
             }
         }
