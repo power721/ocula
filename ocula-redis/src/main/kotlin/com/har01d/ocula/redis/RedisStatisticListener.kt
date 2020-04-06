@@ -75,13 +75,12 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
     }
 
     override fun onFinish() {
+        map["endTime"] = System.currentTimeMillis().toInt()
         redisson.shutdown()
     }
 
     private fun log(finished: Boolean = false) {
-        val endTime = System.currentTimeMillis()
-        map["endTime"] = endTime.toInt()
-        val time = (endTime - startTime) / 1000
+        val time = (System.currentTimeMillis() - startTime) / 1000
         val size1 = spider.crawler?.queue?.size()
         val size2 = spider.parser.queue!!.size()
         val queue = if (!finished) {
