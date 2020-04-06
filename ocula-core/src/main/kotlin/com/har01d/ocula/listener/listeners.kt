@@ -37,9 +37,12 @@ abstract class AbstractListener : Listener {
     override fun onFinish() {}
 }
 
-class StatisticListener : AbstractListener() {
+abstract class StatisticListener : AbstractListener() {
     lateinit var spider: Spider<*>
-    private val logger: Logger = LoggerFactory.getLogger(StatisticListener::class.java)
+}
+
+class DefaultStatisticListener : StatisticListener() {
+    private val logger: Logger = LoggerFactory.getLogger(DefaultStatisticListener::class.java)
     private lateinit var job: Job
     private var skipped = 0
     private var downloaded = 0
@@ -83,7 +86,7 @@ class StatisticListener : AbstractListener() {
         log()
     }
 
-    override fun onFinish() {
+    override fun onComplete() {
         job.cancel()
         log(true)
     }

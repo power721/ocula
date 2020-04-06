@@ -21,6 +21,8 @@ open class Selector(private val body: String) {
 
     fun links(cssQuery: String = "a[href]"): List<String> = select(cssQuery).map { it.attr("href") }
 
+    fun images(cssQuery: String = "img[src]"): List<String> = select(cssQuery).map { it.attr("src") }
+
     fun xpath(expression: String): List<String> = Xsoup.compile(expression).evaluate(document).list()
 
     fun <T> xpath(expression: String, clazz: Class<T>): T {

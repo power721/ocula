@@ -3,6 +3,7 @@ package com.har01d.ocula
 import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.handler.*
 import com.har01d.ocula.http.*
+import com.har01d.ocula.listener.DefaultStatisticListener
 import com.har01d.ocula.listener.Listener
 import com.har01d.ocula.listener.StatisticListener
 import com.har01d.ocula.parser.Parser
@@ -28,7 +29,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
-    val listeners = mutableListOf<Listener>(StatisticListener().apply { spider = this@Spider })
+    val listeners = mutableListOf<Listener>()
+    lateinit var statisticListener: StatisticListener
     lateinit var httpClient: HttpClient
     var status: Status = Status.IDLE
         private set
@@ -240,6 +242,11 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
         }
+        if (!this::statisticListener.isInitialized) {
+            statisticListener = DefaultStatisticListener()
+        }
+        statisticListener.spider = this@Spider
+        listeners += statisticListener
         crawler?.let {
             it.queue = it.queue ?: InMemoryRequestQueue()
             it.dedupHandler = it.dedupHandler ?: HashSetDedupHandler()

@@ -5,14 +5,12 @@ import com.har01d.ocula.crawler.AbstractCrawler
 import com.har01d.ocula.examples.crawler.QQCourseParser
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
-import com.har01d.ocula.redis.RedisDedupHandler
-import com.har01d.ocula.redis.RedisRequestQueue
+import com.har01d.ocula.redis.enableRedis
 import com.har01d.ocula.util.path
 
 fun main() {
     Spider(QQCourseCrawler(), QQCourseParser(), "https://ke.qq.com/course/list") {
-        parser.dedupHandler = RedisDedupHandler("qq-course-set")
-        parser.queue = RedisRequestQueue("qq-course-queue")
+        enableRedis("qq")
     }.run()
 }
 

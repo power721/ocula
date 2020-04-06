@@ -5,12 +5,11 @@ import com.har01d.ocula.handler.ResultHandler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.image.*
-import com.har01d.ocula.selector.get
 import com.har01d.ocula.util.normalizeUrl
 
 fun main() {
     SimpleSpider("https://book.douban.com") { _, res ->
-        res.select("img[src]").map { it["src"] }
+        res.images()
     }.downloadImages(System.getProperty("java.io.tmpdir") + "/images")
 
     SimpleSpider("https://cn.bing.com") { _, res ->
