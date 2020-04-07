@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
     val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/") {
-        authHandler = CsrfFormAuthHandler()
+        config.authHandler = CsrfFormAuthHandler()
         listeners += LogListener
         resultHandlers += ConsoleLogResultHandler
         resultHandlers += TextFileResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/text")

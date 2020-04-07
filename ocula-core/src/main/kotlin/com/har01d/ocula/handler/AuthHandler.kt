@@ -6,6 +6,8 @@ import com.har01d.ocula.http.Response
 import java.net.HttpCookie
 import java.util.*
 
+typealias AuthConfigure = (request: Request, response: Response) -> Unit
+
 abstract class AuthHandler : AbstractPreHandler() {
     fun dispatch(request: Request) = context.dispatch(request)
 }
@@ -35,7 +37,11 @@ val sessionHandler = fun(request: Request, response: Response) {
             }
 }
 
-class FormAuthHandler(private val actionUrl: String, private val parameters: Parameters, val block: (request: Request, response: Response) -> Unit = sessionHandler) : AuthHandler() {
+class FormAuthHandler(
+    private val actionUrl: String,
+    private val parameters: Parameters,
+    val block: AuthConfigure = sessionHandler
+) : AuthHandler() {
     override fun handle(request: Request) {
         val formRequest = Request(actionUrl, HttpMethod.POST, parameters)
         val response = dispatch(formRequest)

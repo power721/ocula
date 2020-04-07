@@ -3,11 +3,13 @@ package com.har01d.ocula.listener
 import com.har01d.ocula.Spider
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
+import com.har01d.ocula.util.toDuration
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 interface Listener {
+    val order: Int
     fun onStart()
     fun onSkip(request: Request)
     fun onDownloadSuccess(request: Request, response: Response)
@@ -18,11 +20,13 @@ interface Listener {
     fun onParseFailed(request: Request, response: Response, e: Throwable)
     fun onError(e: Throwable)
     fun onCancel()
+    fun onAbort()
     fun onComplete()
     fun onShutdown()
 }
 
 abstract class AbstractListener : Listener {
+    override val order: Int = 100
     override fun onStart() {}
     override fun onSkip(request: Request) {}
     override fun onDownloadSuccess(request: Request, response: Response) {}
@@ -33,11 +37,13 @@ abstract class AbstractListener : Listener {
     override fun onParseFailed(request: Request, response: Response, e: Throwable) {}
     override fun onError(e: Throwable) {}
     override fun onCancel() {}
+    override fun onAbort() {}
     override fun onComplete() {}
     override fun onShutdown() {}
 }
 
 abstract class StatisticListener : AbstractListener() {
+    override val order: Int = 1000
     lateinit var spider: Spider<*>
 }
 
@@ -86,13 +92,18 @@ class DefaultStatisticListener : StatisticListener() {
         log()
     }
 
+    override fun onAbort() {
+        job.cancel()
+        log()
+    }
+
     override fun onComplete() {
         job.cancel()
         log(true)
     }
 
     private fun log(finished: Boolean = false) {
-        val time = (System.currentTimeMillis() - startTime) / 1000
+        val time = (System.currentTimeMillis() - startTime).toDuration()
         val size1 = spider.crawler?.queue?.size()
         val size2 = spider.parser.queue!!.size()
         val queue = if (!finished) {
@@ -102,7 +113,8 @@ class DefaultStatisticListener : StatisticListener() {
         }
         val name = spider.name
         logger.info("$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
-                "Skipped pages: $skipped $queue Errors: $errors  Time: ${time}s")
+                "Skipped pages: $skipped $queue Errors: $errors  Time: $time"
+        )
     }
 }
 

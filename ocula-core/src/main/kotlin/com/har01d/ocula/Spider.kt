@@ -11,20 +11,25 @@ import com.har01d.ocula.parser.SimpleParser
 import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
 import com.har01d.ocula.util.normalizeUrl
+import com.har01d.ocula.util.path
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 
-open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Spider<T>.() -> Unit = {}) : Config(), Context {
+typealias Configure<T> = Spider<T>.() -> Unit
+
+open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Configure<T> = {}) : Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
     }
 
     override lateinit var name: String
+    val config = Config()
     val requests = mutableListOf<Request>()
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
@@ -36,14 +41,23 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         private set
 
     private var finished = false
+    private var aborted = false
     private var stoped = false
-    private lateinit var coroutineContext: CoroutineContext
+    private var coroutineContext: CoroutineContext = EmptyCoroutineContext
 
-    constructor(parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(null, parser, configure) {
+    constructor(parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(
+        null,
+        parser,
+        configure
+    ) {
         requests += urls.map { Request(it) }
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Spider<T>.() -> Unit = {}) : this(crawler, parser, configure) {
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(
+        crawler,
+        parser,
+        configure
+    ) {
         requests += urls.map { Request(it) }
     }
 
@@ -73,25 +87,55 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         requests += request
     }
 
+    fun configure(block: Config.() -> Unit) {
+        with(config) {
+            block()
+        }
+    }
+
+    fun basicAuth(username: String, password: String) {
+        config.authHandler = BasicAuthHandler(username, password)
+    }
+
+    fun cookieAuth(name: String, value: String) {
+        config.authHandler = CookieAuthHandler(name, value)
+    }
+
+    fun tokenAuth(token: String, header: String = "Authorization") {
+        config.authHandler = TokenAuthHandler(token, header)
+    }
+
+    fun formAuth(actionUrl: String, parameters: Parameters, block: AuthConfigure = sessionHandler) {
+        config.authHandler = FormAuthHandler(actionUrl, parameters, block)
+    }
+
+    fun httpProxy(hostname: String, port: Int) {
+        config.http.proxies += HttpProxy(hostname, port)
+    }
+
     /**
      * Add urls to the crawler queue.
      */
-    override fun crawl(refer: String, vararg urls: String) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *urls)
+    override fun crawl(refer: String, vararg urls: String) =
+        enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *urls)
 
     /**
      * Add requests to the crawler queue.
      */
-    override fun crawl(refer: String, vararg requests: Request) = enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *requests)
+    override fun crawl(refer: String, vararg requests: Request) =
+        enqueue(crawler?.queue!!, crawler.dedupHandler!!, refer, *requests)
 
     /**
      * Add urls to the parser queue.
      */
-    override fun follow(refer: String, vararg urls: String) = enqueue(parser.queue!!, parser.dedupHandler!!, refer, *urls)
+    override fun follow(refer: String, vararg urls: String) =
+        enqueue(parser.queue!!, parser.dedupHandler!!, refer, *urls)
 
     /**
      * Add requests to the parser queue.
      */
-    override fun follow(refer: String, vararg requests: Request) = enqueue(parser.queue!!, parser.dedupHandler!!, refer, *requests)
+    override fun follow(refer: String, vararg requests: Request) =
+        enqueue(parser.queue!!, parser.dedupHandler!!, refer, *requests)
 
     /**
      * Add urls to the queue, will normalize the url by refer URL, check duplication before add them.
@@ -106,7 +150,12 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * RobotsHandler checks if the urls can access by robots.txt.
      * DedupHandler checks if the requests should handle.
      */
-    private fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg requests: Request): Boolean {
+    private fun enqueue(
+        queue: RequestQueue,
+        dedupHandler: DedupHandler,
+        refer: String,
+        vararg requests: Request
+    ): Boolean {
         var success = false
         for (request in requests) {
             val url = request.url
@@ -117,7 +166,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             if (uri != null) {
                 request.headers["Referer"] = listOf(refer)
                 val req = request.copy(url = uri)
-                if (!http.robotsHandler.handle(req)) {
+                if (!config.http.robotsHandler.handle(req)) {
                     listeners.forEach { it.onSkip(req) }
                     logger.debug("Skip {}", req.url)
                     continue
@@ -185,24 +234,22 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         val jobs = mutableListOf<Job>()
 
         if (crawler != null) {
-            requests.forEach {
-                crawler.queue!!.push(it)
-            }
+            crawl(requests[0].url.path(), *requests.toTypedArray())
 
             crawler.context = this@Spider
-            val job = GlobalScope.plus(coroutineContext).launch {
-                crawl(this)
+            repeat(config.crawler.concurrency) {
+                val job = GlobalScope.plus(coroutineContext).launch {
+                    crawl(this)
+                }
+                jobs += job
             }
-            jobs += job
         } else {
-            requests.forEach {
-                parser.queue!!.push(it)
-            }
+            follow(requests[0].url.path(), *requests.toTypedArray())
         }
 
         parser.context = this@Spider
         coroutineScope {
-            repeat(concurrency) {
+            repeat(config.parser.concurrency) {
                 val job = launch(coroutineContext) {
                     parse(this)
                 }
@@ -212,10 +259,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         jobs.forEach { it.join() }
 
         postHandle()
-        if (status == Status.CANCELLED) {
-            listeners.forEach { it.onCancel() }
-        } else {
-            listeners.forEach { it.onComplete() }
+        when (status) {
+            Status.CANCELLED -> listeners.forEach { it.onCancel() }
+            Status.ABORTED -> listeners.forEach { it.onCancel() }
+            else -> listeners.forEach { it.onComplete() }
         }
         listeners.forEach { it.onShutdown() }
         logger.info("Spider $name is $status")
@@ -237,14 +284,14 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         if (!this::name.isInitialized) {
             name = URL(requests[0].url).host
         }
-        if (concurrency == 0) {
-            concurrency = if (crawler != null) {
+        if (config.parser.concurrency == 0) {
+            config.parser.concurrency = if (crawler != null) {
                 Runtime.getRuntime().availableProcessors()
             } else {
                 1
             }
         }
-        coroutineContext = newFixedThreadPoolContext(concurrency, "Spider")
+        coroutineContext = newFixedThreadPoolContext(config.parser.concurrency, "Spider")
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
         }
@@ -265,18 +312,19 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             if (queue is Listener) listeners += queue as Listener
             if (dedupHandler is Listener) listeners += dedupHandler as Listener
         }
-        with(http.robotsHandler) {
+        with(config.http.robotsHandler) {
             if (this is Listener) listeners += this as Listener
             init(requests)
         }
-        authHandler?.let {
-            preHandlers += authHandler!!
-            if (authHandler is Listener) listeners += authHandler as Listener
+        config.authHandler?.let {
+            preHandlers += config.authHandler!!
+            if (config.authHandler is Listener) listeners += config.authHandler as Listener
         }
-        with(http) {
+        with(config.http) {
             userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
             proxyProvider = proxyProvider ?: RoundRobinProxyProvider(proxies)
         }
+        listeners.sortBy { it.order }
         initHttpClient()
     }
 
@@ -287,16 +335,16 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         crawler?.let {
             it.httpClient = it.httpClient ?: httpClient
             val client = it.httpClient!!
-            client.userAgentProvider = http.userAgentProvider!!
-            client.proxyProvider = http.proxyProvider!!
-            client.charset = http.charset
+            client.userAgentProvider = config.http.userAgentProvider!!
+            client.proxyProvider = config.http.proxyProvider!!
+            client.charset = config.http.charset
         }
 
         parser.httpClient = parser.httpClient ?: httpClient
         val client = parser.httpClient!!
-        client.userAgentProvider = http.userAgentProvider!!
-        client.proxyProvider = http.proxyProvider!!
-        client.charset = http.charset
+        client.userAgentProvider = config.http.userAgentProvider!!
+        client.proxyProvider = config.http.proxyProvider!!
+        client.charset = config.http.charset
     }
 
     open fun preHandle() {
@@ -326,7 +374,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             }
         }
         if (status == Status.RUNNING) {
-            status = Status.COMPLETED
+            status = if (aborted) Status.ABORTED else Status.COMPLETED
         }
     }
 
@@ -334,11 +382,17 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         if (referer != null && !request.headers.containsKey("Referer")) {
             request.headers["Referer"] = listOf(referer)
         }
-        for (entry in http.headers) {
+        for (entry in config.http.headers) {
             if (!request.headers.containsKey(entry.key)) {
                 request.headers[entry.key] = entry.value
             }
         }
+    }
+
+    private fun abort() {
+        aborted = true
+        finished = true
+        logger.warn("Will abort after queue is empty")
     }
 
     private val count = AtomicInteger(0)
@@ -361,6 +415,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                             } catch (e: Exception) {
                                 listeners.forEach { it.onCrawlFailed(request, e) }
                                 listeners.forEach { it.onError(e) }
+                                if (config.crawler.abortOnError) abort()
                                 logger.warn("Crawl page {} failed", request.url, e)
                             }
                             count.decrementAndGet()
@@ -368,15 +423,17 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                         result.onFailure { e ->
                             listeners.forEach { it.onDownloadFailed(request, e) }
                             listeners.forEach { it.onError(e) }
+                            if (config.crawler.abortOnError) abort()
                             logger.warn("Download page {} failed", request.url, e)
                             count.decrementAndGet()
                         }
                     }
                     referer = request.url
 
-                    delay(interval)
+                    delay(config.interval)
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
+                    if (config.crawler.abortOnError) abort()
                     logger.warn("Crawl page {} failed", request.url, e)
                 }
             }
@@ -414,11 +471,13 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                                         it.handle(request, response, result)
                                     } catch (e: Exception) {
                                         listeners.forEach { l -> l.onError(e) }
+                                        if (config.parser.abortOnError) abort()
                                         logger.warn("Handle result failed", e)
                                     }
                                 }
                             } catch (e: Throwable) {
                                 listeners.forEach { it.onError(e) }
+                                if (config.parser.abortOnError) abort()
                                 logger.warn("Parse page {} failed", request.url, e)
                             }
                             count.decrementAndGet()
@@ -426,15 +485,17 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                         res.onFailure { e ->
                             listeners.forEach { it.onDownloadFailed(request, e) }
                             listeners.forEach { it.onError(e) }
+                            if (config.parser.abortOnError) abort()
                             logger.warn("Download page {} failed", request.url, e)
                             count.decrementAndGet()
                         }
                     }
                     referer = request.url
 
-                    delay(interval)
+                    delay(config.interval)
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
+                    if (config.parser.abortOnError) abort()
                     logger.warn("Handle page {} failed", request.url, e)
                 }
             }
@@ -446,7 +507,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 }
 
-class SimpleSpider<T>(vararg url: String, parse: (request: Request, response: Response) -> T) : Spider<T>(SimpleParser(parse), *url)
+class SimpleSpider<T>(vararg url: String, parse: (request: Request, response: Response) -> T) :
+    Spider<T>(SimpleParser(parse), *url)
 
 enum class Status {
     IDLE,

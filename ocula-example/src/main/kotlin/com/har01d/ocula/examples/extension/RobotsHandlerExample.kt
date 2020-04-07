@@ -8,7 +8,7 @@ import com.har01d.ocula.robots.SimpleRobotsHandler
 
 fun main() {
     Spider(PageParser(), "https://cn.bing.com/") {
-        http.robotsHandler = SimpleRobotsHandler()
+        config.http.robotsHandler = SimpleRobotsHandler()
     }.run()
 }
 

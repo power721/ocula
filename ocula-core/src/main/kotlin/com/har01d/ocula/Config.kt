@@ -2,8 +2,12 @@ package com.har01d.ocula
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.har01d.ocula.handler.*
-import com.har01d.ocula.http.*
+import com.har01d.ocula.handler.AuthHandler
+import com.har01d.ocula.handler.NoopRobotsHandler
+import com.har01d.ocula.handler.RobotsHandler
+import com.har01d.ocula.http.HttpProxy
+import com.har01d.ocula.http.ProxyProvider
+import com.har01d.ocula.http.UserAgentProvider
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
@@ -24,32 +28,13 @@ open class Config {
         }
     }
 
-    val http = Http()
-    var concurrency: Int = 0
+    val http = HttpConfig()
+    val crawler = CrawlerConfig()
+    val parser = ParserConfig()
     var interval: Long = 500L
     var authHandler: AuthHandler? = null
 
-    fun basicAuth(username: String, password: String) {
-        authHandler = BasicAuthHandler(username, password)
-    }
-
-    fun cookieAuth(name: String, value: String) {
-        authHandler = CookieAuthHandler(name, value)
-    }
-
-    fun tokenAuth(token: String, header: String = "Authorization") {
-        authHandler = TokenAuthHandler(token, header)
-    }
-
-    fun formAuth(actionUrl: String, parameters: Parameters, block: (request: Request, response: Response) -> Unit = sessionHandler) {
-        authHandler = FormAuthHandler(actionUrl, parameters, block)
-    }
-
-    fun httpProxy(hostname: String, port: Int) {
-        http.proxies += HttpProxy(hostname, port)
-    }
-
-    class Http {
+    class HttpConfig {
         private val defaultUserAgents = listOf(
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36",
                 "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0",
@@ -93,5 +78,15 @@ open class Config {
         val proxies = mutableListOf<HttpProxy>()
         var proxyProvider: ProxyProvider? = null
         var robotsHandler: RobotsHandler = NoopRobotsHandler
+    }
+
+    class CrawlerConfig {
+        var abortOnError = false
+        var concurrency: Int = 1
+    }
+
+    class ParserConfig {
+        var abortOnError = false
+        var concurrency: Int = 0
     }
 }

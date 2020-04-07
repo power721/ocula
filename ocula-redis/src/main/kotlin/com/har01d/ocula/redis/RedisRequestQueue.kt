@@ -2,7 +2,6 @@ package com.har01d.ocula.redis
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.har01d.ocula.http.Request
-import com.har01d.ocula.listener.AbstractListener
 import com.har01d.ocula.queue.RequestQueue
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
@@ -10,7 +9,7 @@ import org.redisson.codec.JsonJacksonCodec
 import org.redisson.config.Config
 import java.util.concurrent.TimeUnit
 
-class RedisRequestQueue(name: String, connection: String = "redis://127.0.0.1:6379") : RequestQueue, AbstractListener() {
+class RedisRequestQueue(name: String, connection: String = "redis://127.0.0.1:6379") : RequestQueue {
     private lateinit var redisson: RedissonClient
     private val queue by lazy { redisson.getBlockingQueue<String>(name) }
     private val mapper = jacksonObjectMapper()
@@ -47,9 +46,5 @@ class RedisRequestQueue(name: String, connection: String = "redis://127.0.0.1:63
 
     override fun isEmpty(): Boolean {
         return size() == 0
-    }
-
-    override fun onShutdown() {
-        redisson.shutdown()
     }
 }

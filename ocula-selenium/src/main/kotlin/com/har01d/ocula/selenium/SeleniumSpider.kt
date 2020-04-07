@@ -7,18 +7,25 @@ import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.parser.SimpleParser
 
-open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, configure: SeleniumSpider<T>.() -> Unit = {}) : Spider<T>(crawler, parser) {
+typealias Configure<T> = SeleniumSpider<T>.() -> Unit
+
+open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, configure: Configure<T> = {}) :
+    Spider<T>(crawler, parser) {
     var driverType: DriverType = DriverType.CHROME
     var headless: Boolean = true
     var phantomjsExecPath: String? = null
     var webDriverProvider: WebDriverProvider? = null
     var actionHandler: SeleniumActionHandler? = null
 
-    constructor(parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(null, parser, configure) {
+    constructor(parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(null, parser, configure) {
         addUrl(*urls)
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: SeleniumSpider<T>.() -> Unit = {}) : this(crawler, parser, configure) {
+    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(
+        crawler,
+        parser,
+        configure
+    ) {
         addUrl(*urls)
     }
 
@@ -27,11 +34,17 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
     }
 
     override fun initHttpClient() {
-        if (concurrency == 0) {
-            concurrency = if (http.proxies.size > 0) http.proxies.size else 1
+        if (config.parser.concurrency == 0) {
+            config.parser.concurrency = if (config.http.proxies.size > 0) config.http.proxies.size else 1
         }
         webDriverProvider = webDriverProvider
-                ?: DefaultWebDriverProvider(concurrency, http.proxyProvider!!, driverType, headless, phantomjsExecPath)
+            ?: DefaultWebDriverProvider(
+                config.parser.concurrency,
+                config.http.proxyProvider!!,
+                driverType,
+                headless,
+                phantomjsExecPath
+            )
         val httpClient = SeleniumHttpClient(webDriverProvider!!)
         httpClient.actionHandler = actionHandler
         this.httpClient = httpClient

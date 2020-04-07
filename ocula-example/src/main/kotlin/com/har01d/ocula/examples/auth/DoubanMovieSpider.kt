@@ -11,7 +11,7 @@ fun main() {
         res.select("h1").text()
     }.apply {
         //cookieAuth("dbcl2", "19980731:YCYCCYY")
-        authHandler = LoginHandler("username", "password")
+        config.authHandler = LoginHandler("username", "password")
     }.run()
 }
 

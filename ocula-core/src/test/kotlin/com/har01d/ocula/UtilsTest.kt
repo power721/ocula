@@ -3,6 +3,7 @@ package com.har01d.ocula
 import com.har01d.ocula.util.generateId
 import com.har01d.ocula.util.md5
 import com.har01d.ocula.util.normalizeUrl
+import com.har01d.ocula.util.toDuration
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -46,5 +47,17 @@ class UtilsTest {
     fun testGenerateId() {
         assertEquals(6, generateId(6).length)
         assertEquals(10, generateId(10).length)
+    }
+
+    @Test
+    fun testDuration() {
+        assertEquals("5.000", 5000L.toDuration())
+        assertEquals("5.123", 5123L.toDuration())
+        assertEquals("50.000", 50000L.toDuration())
+        assertEquals("50.045", 50045L.toDuration())
+        assertEquals("01:00.000", 60000L.toDuration())
+        assertEquals("10:00.000", 600000L.toDuration())
+        assertEquals("01:00:00.000", 3600000L.toDuration())
+        assertEquals("101:01:15.456", 363675456L.toDuration())
     }
 }

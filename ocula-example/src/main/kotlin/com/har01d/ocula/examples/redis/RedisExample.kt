@@ -10,7 +10,7 @@ import com.har01d.ocula.util.path
 
 fun main() {
     Spider(QQCourseCrawler(), QQCourseParser(), "https://ke.qq.com/course/list") {
-        enableRedis("qq")
+        enableRedis("qq", shutdownRedisson = true)
     }.run()
 }
 

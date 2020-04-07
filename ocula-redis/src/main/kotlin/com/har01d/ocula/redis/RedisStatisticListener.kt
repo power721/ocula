@@ -4,6 +4,7 @@ import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.listener.DefaultStatisticListener
 import com.har01d.ocula.listener.StatisticListener
+import com.har01d.ocula.util.toDuration
 import kotlinx.coroutines.*
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
@@ -12,7 +13,12 @@ import org.redisson.config.Config
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class RedisStatisticListener(name: String, connection: String = "redis://127.0.0.1:6379") : StatisticListener() {
+class RedisStatisticListener(
+    name: String,
+    connection: String = "redis://127.0.0.1:6379",
+    private val shutdownRedisson: Boolean = false
+) : StatisticListener() {
+    override val order: Int = 10000
     private lateinit var redisson: RedissonClient
     private val map by lazy { redisson.getMap<String, Int>(name) }
 
@@ -20,7 +26,11 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
     private lateinit var job: Job
     private var startTime: Long = 0
 
-    constructor(name: String, redisson: RedissonClient) : this(name, "") {
+    constructor(name: String, redisson: RedissonClient, shutdownRedisson: Boolean = false) : this(
+        name,
+        "",
+        shutdownRedisson
+    ) {
         this.redisson = redisson
     }
 
@@ -70,6 +80,11 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
         log()
     }
 
+    override fun onAbort() {
+        job.cancel()
+        log()
+    }
+
     override fun onComplete() {
         job.cancel()
         log(true)
@@ -79,11 +94,13 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
         val endTime = System.currentTimeMillis()
         map["endTime"] = endTime.toInt()
         map.addAndGetAsync("elapsed", (endTime - startTime))
-        redisson.shutdown()
+        if (shutdownRedisson) {
+            redisson.shutdown()
+        }
     }
 
     private fun log(finished: Boolean = false) {
-        val time = (System.currentTimeMillis() - startTime) / 1000
+        val time = (System.currentTimeMillis() - startTime).toDuration()
         val size1 = spider.crawler?.queue?.size()
         val size2 = spider.parser.queue!!.size()
         val queue = if (!finished) {
@@ -97,7 +114,9 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
         val crawled = map.getOrDefault("crawled", 0)
         val parsed = map.getOrDefault("parsed", 0)
         val errors = map.getOrDefault("errors", 0)
-        logger.info("$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
-                "Skipped pages: $skipped $queue Errors: $errors  Time: ${time}s")
+        logger.info(
+            "$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
+                    "Skipped pages: $skipped $queue Errors: $errors  Time: $time"
+        )
     }
 }

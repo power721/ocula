@@ -1,16 +1,16 @@
 package com.har01d.ocula.redis
 
-import com.har01d.ocula.handler.DedupHandler
 import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.Response
+import com.har01d.ocula.listener.AbstractListener
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.codec.JsonJacksonCodec
 import org.redisson.config.Config
-import java.util.concurrent.TimeUnit
 
-class RedisDedupHandler(name: String, connection: String = "redis://127.0.0.1:6379") : DedupHandler {
+class RedisErrorListener(name: String, connection: String = "redis://127.0.0.1:6379") : AbstractListener() {
     private lateinit var redisson: RedissonClient
-    private val set by lazy { redisson.getSet<String>(name) }
+    private val list by lazy { redisson.getList<String>(name) }
 
     constructor(name: String, redisson: RedissonClient) : this(name, "") {
         this.redisson = redisson
@@ -25,11 +25,15 @@ class RedisDedupHandler(name: String, connection: String = "redis://127.0.0.1:63
         }
     }
 
-    fun expire(timeToLive: Long, timeUnit: TimeUnit) {
-        set.expireAsync(timeToLive, timeUnit)
+    override fun onDownloadFailed(request: Request, e: Throwable) {
+        list.add(request.url)
     }
 
-    override fun handle(request: Request): Boolean {
-        return set.add(request.url)
+    override fun onCrawlFailed(request: Request, e: Throwable) {
+        list.add(request.url)
+    }
+
+    override fun onParseFailed(request: Request, response: Response, e: Throwable) {
+        list.add(request.url)
     }
 }

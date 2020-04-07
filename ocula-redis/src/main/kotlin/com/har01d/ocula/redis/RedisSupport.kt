@@ -7,19 +7,31 @@ import org.redisson.api.RedissonClient
 import org.redisson.codec.JsonJacksonCodec
 import org.redisson.config.Config
 
-fun <T> Spider<T>.enableRedis(keyPrefix: String, connection: String = "redis://127.0.0.1:6379", includeCrawler: Boolean = false) {
+fun <T> Spider<T>.enableRedis(
+    keyPrefix: String,
+    connection: String = "redis://127.0.0.1:6379",
+    includeCrawler: Boolean = false,
+    shutdownRedisson: Boolean = true
+): RedissonClient {
     val config = Config()
     config.codec = JsonJacksonCodec()
     config.useSingleServer().address = connection
     val redisson = Redisson.create(config)
 
-    enableRedis(keyPrefix, redisson, includeCrawler)
+    enableRedis(keyPrefix, redisson, includeCrawler, shutdownRedisson)
+    return redisson
 }
 
-fun <T> Spider<T>.enableRedis(keyPrefix: String, redisson: RedissonClient, includeCrawler: Boolean = false) {
-    parser.dedupHandler = RedisDedupHandler("$keyPrefix-set", redisson)
+fun <T> Spider<T>.enableRedis(
+    keyPrefix: String,
+    redisson: RedissonClient,
+    includeCrawler: Boolean = false,
+    shutdownRedisson: Boolean = false
+) {
     parser.queue = RedisRequestQueue("$keyPrefix-p-queue", redisson)
-    statisticListener = RedisStatisticListener("$keyPrefix-stat", redisson)
+    parser.dedupHandler = RedisDedupHandler("$keyPrefix-set", redisson)
+    statisticListener = RedisStatisticListener("$keyPrefix-stat", redisson, shutdownRedisson)
+    listeners += RedisErrorListener("$keyPrefix-failed", redisson)
     if (includeCrawler && crawler != null) {
         crawler!!.dedupHandler = parser.dedupHandler
         crawler!!.queue = RedisRequestQueue("$keyPrefix-c-queue", redisson)

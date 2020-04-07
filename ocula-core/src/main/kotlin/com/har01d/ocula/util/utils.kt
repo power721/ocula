@@ -25,6 +25,27 @@ fun normalizeUrl(refer: String, url: String) =
             null
         }
 
+fun Long.toDuration(): String {
+    val seconds = this / 1000
+    val ms = this % 1000
+    return when {
+        seconds < 60 -> {
+            String.format("%d.%03d", seconds, ms)
+        }
+        seconds < 60 * 60 -> {
+            val m = seconds / 60
+            val s = seconds % 60
+            String.format("%02d:%02d.%03d", m, s, ms)
+        }
+        else -> {
+            val h = seconds / 3600
+            val m = seconds % 3600 / 60
+            val s = seconds % 60
+            String.format("%02d:%02d:%02d.%03d", h, m, s, ms)
+        }
+    }
+}
+
 fun String.path(): String {
     val index = indexOfAny(charArrayOf('?', '#'))
     if (index > 0) {
