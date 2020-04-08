@@ -261,13 +261,12 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         }
 
         parser.context = this@Spider
-        coroutineScope {
-            repeat(config.parser.concurrency) {
-                val job = launch(coroutineContext) {
-                    parse(this)
-                }
-                jobs += job
+        val scope = CoroutineScope(coroutineContext)
+        repeat(config.parser.concurrency) {
+            val job = scope.launch {
+                parse(this)
             }
+            jobs += job
         }
         jobs.forEach { it.join() }
 
