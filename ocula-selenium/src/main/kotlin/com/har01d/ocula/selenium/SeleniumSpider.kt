@@ -11,9 +11,7 @@ typealias Configure<T> = SeleniumSpider<T>.() -> Unit
 
 open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, configure: Configure<T> = {}) :
     Spider<T>(crawler, parser) {
-    var driverType: DriverType = DriverType.CHROME
-    var headless: Boolean = true
-    var phantomjsExecPath: String? = null
+    override val config = SeleniumConfig()
     var webDriverProvider: WebDriverProvider? = null
     var actionHandler: SeleniumActionHandler? = null
 
@@ -49,9 +47,9 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
             ?: DefaultWebDriverProvider(
                 config.parser.concurrency,
                 config.http.proxyProvider!!,
-                driverType,
-                headless,
-                phantomjsExecPath
+                config.driverType,
+                config.headless,
+                config.phantomjsExecPath
             )
         val httpClient = SeleniumHttpClient(webDriverProvider!!)
         httpClient.actionHandler = actionHandler
@@ -65,8 +63,8 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
     }
 
     fun phantomjs(execPath: String): SeleniumSpider<T> {
-        driverType = DriverType.PHANTOMJS
-        phantomjsExecPath = execPath
+        config.driverType = DriverType.PHANTOMJS
+        config.phantomjsExecPath = execPath
         return this
     }
 }

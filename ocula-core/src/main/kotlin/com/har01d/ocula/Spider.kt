@@ -29,7 +29,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     override lateinit var name: String
-    val config = Config()
+    open val config = Config()
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
