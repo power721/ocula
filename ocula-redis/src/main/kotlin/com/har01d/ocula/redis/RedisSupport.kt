@@ -22,6 +22,9 @@ fun <T> Spider<T>.enableRedis(
     return redisson
 }
 
+/**
+ * JsonJacksonCodec is required.
+ */
 fun <T> Spider<T>.enableRedis(
     keyPrefix: String,
     redisson: RedissonClient,

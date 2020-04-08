@@ -88,18 +88,19 @@ class DefaultStatisticListener : StatisticListener() {
     }
 
     override fun onCancel() {
-        job.cancel()
         log()
     }
 
     override fun onAbort() {
-        job.cancel()
         log()
     }
 
     override fun onComplete() {
-        job.cancel()
         log(true)
+    }
+
+    override fun onShutdown() {
+        job.cancel()
     }
 
     private fun log(finished: Boolean = false) {

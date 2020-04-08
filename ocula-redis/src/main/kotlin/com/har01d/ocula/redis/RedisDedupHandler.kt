@@ -6,7 +6,6 @@ import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.codec.JsonJacksonCodec
 import org.redisson.config.Config
-import java.util.concurrent.TimeUnit
 
 class RedisDedupHandler(name: String, connection: String = "redis://127.0.0.1:6379") : DedupHandler {
     private lateinit var redisson: RedissonClient
@@ -23,10 +22,6 @@ class RedisDedupHandler(name: String, connection: String = "redis://127.0.0.1:63
             config.useSingleServer().address = connection
             redisson = Redisson.create(config)
         }
-    }
-
-    fun expire(timeToLive: Long, timeUnit: TimeUnit) {
-        set.expireAsync(timeToLive, timeUnit)
     }
 
     override fun handle(request: Request): Boolean {

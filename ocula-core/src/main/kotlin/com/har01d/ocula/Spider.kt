@@ -30,35 +30,39 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
     override lateinit var name: String
     val config = Config()
-    val requests = mutableListOf<Request>()
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener>()
     lateinit var statisticListener: StatisticListener
     lateinit var httpClient: HttpClient
+    private val requests = mutableListOf<Request>()
+
     var status: Status = Status.IDLE
         private set
-
     private var finished = false
     private var aborted = false
     private var stoped = false
     private var coroutineContext: CoroutineContext = EmptyCoroutineContext
 
-    constructor(parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(
-        null,
-        parser,
-        configure
-    ) {
-        requests += urls.map { Request(it) }
+    constructor(parser: Parser<T>, vararg url: String, configure: Configure<T> = {})
+            : this(null, parser, configure) {
+        requests += url.map { Request(it) }
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(
-        crawler,
-        parser,
-        configure
-    ) {
-        requests += urls.map { Request(it) }
+    constructor(crawler: Crawler, parser: Parser<T>, vararg url: String, configure: Configure<T> = {})
+            : this(crawler, parser, configure) {
+        requests += url.map { Request(it) }
+    }
+
+    constructor(parser: Parser<T>, vararg request: Request, configure: Configure<T> = {})
+            : this(null, parser, configure) {
+        requests += request
+    }
+
+    constructor(crawler: Crawler, parser: Parser<T>, vararg request: Request, configure: Configure<T> = {})
+            : this(crawler, parser, configure) {
+        requests += request
     }
 
     init {
@@ -199,6 +203,14 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * Indicate no more new tasks, wait tasks in queue finish.
      */
     override fun finish() {
+        finished = true
+    }
+
+    /**
+     * Abort the Spider because of error, wait tasks in queue finish.
+     */
+    override fun abort() {
+        aborted = true
         finished = true
     }
 
@@ -387,12 +399,6 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 request.headers[entry.key] = entry.value
             }
         }
-    }
-
-    private fun abort() {
-        aborted = true
-        finished = true
-        logger.warn("Will abort after queue is empty")
     }
 
     private val count = AtomicInteger(0)

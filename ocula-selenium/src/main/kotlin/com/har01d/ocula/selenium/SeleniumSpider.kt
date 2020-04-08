@@ -17,16 +17,24 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
     var webDriverProvider: WebDriverProvider? = null
     var actionHandler: SeleniumActionHandler? = null
 
-    constructor(parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(null, parser, configure) {
-        addUrl(*urls)
+    constructor(parser: Parser<T>, vararg url: String, configure: Configure<T> = {})
+            : this(null, parser, configure) {
+        addUrl(*url)
     }
 
-    constructor(crawler: Crawler, parser: Parser<T>, vararg urls: String, configure: Configure<T> = {}) : this(
-        crawler,
-        parser,
-        configure
-    ) {
-        addUrl(*urls)
+    constructor(crawler: Crawler, parser: Parser<T>, vararg url: String, configure: Configure<T> = {})
+            : this(crawler, parser, configure) {
+        addUrl(*url)
+    }
+
+    constructor(parser: Parser<T>, vararg request: Request, configure: Configure<T> = {})
+            : this(null, parser, configure) {
+        addRequest(*request)
+    }
+
+    constructor(crawler: Crawler, parser: Parser<T>, vararg request: Request, configure: Configure<T> = {})
+            : this(crawler, parser, configure) {
+        addRequest(*request)
     }
 
     init {
@@ -63,7 +71,8 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
     }
 }
 
-class SimpleSeleniumSpider<T>(vararg url: String, parse: (request: Request, response: Response) -> T) : SeleniumSpider<T>(SimpleParser(parse), *url)
+class SimpleSeleniumSpider<T>(vararg url: String, parse: (request: Request, response: Response) -> T) :
+    SeleniumSpider<T>(SimpleParser(parse), *url)
 
 enum class DriverType {
     CHROME,

@@ -67,21 +67,19 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
     }
 
     override fun onCancel() {
-        job.cancel()
         log()
     }
 
     override fun onAbort() {
-        job.cancel()
         log()
     }
 
     override fun onComplete() {
-        job.cancel()
         log(true)
     }
 
     override fun onShutdown() {
+        job.cancel()
         val endTime = System.currentTimeMillis()
         map["endTime"] = endTime.toInt()
         map.addAndGetAsync("elapsed", (endTime - startTime))
