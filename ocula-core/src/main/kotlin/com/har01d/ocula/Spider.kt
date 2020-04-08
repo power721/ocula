@@ -26,6 +26,7 @@ typealias Configure<T> = Spider<T>.() -> Unit
 open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Configure<T> = {}) : Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
+        val id = AtomicInteger(1)
     }
 
     override lateinit var name: String
@@ -34,8 +35,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener>()
-    lateinit var statisticListener: StatisticListener
-    lateinit var httpClient: HttpClient
+    var statisticListener: StatisticListener = DefaultStatisticListener()
+    var httpClient: HttpClient = FuelHttpClient()
     private val requests = mutableListOf<Request>()
 
     var status: Status = Status.IDLE
@@ -303,12 +304,9 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 1
             }
         }
-        coroutineContext = newFixedThreadPoolContext(config.parser.concurrency, "Spider")
+        coroutineContext = newFixedThreadPoolContext(config.parser.concurrency, "Spider-" + id.getAndIncrement())
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
-        }
-        if (!this::statisticListener.isInitialized) {
-            statisticListener = DefaultStatisticListener()
         }
         statisticListener.spider = this@Spider
         listeners += statisticListener
@@ -341,9 +339,6 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     open fun initHttpClient() {
-        if (!this::httpClient.isInitialized) {
-            httpClient = FuelHttpClient()
-        }
         crawler?.let {
             it.httpClient = it.httpClient ?: httpClient
             val client = it.httpClient!!

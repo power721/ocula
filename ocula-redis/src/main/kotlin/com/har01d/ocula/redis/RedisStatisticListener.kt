@@ -2,7 +2,6 @@ package com.har01d.ocula.redis
 
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
-import com.har01d.ocula.listener.DefaultStatisticListener
 import com.har01d.ocula.listener.StatisticListener
 import com.har01d.ocula.util.toDuration
 import kotlinx.coroutines.*
@@ -14,10 +13,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class RedisStatisticListener(name: String, connection: String = "redis://127.0.0.1:6379") : StatisticListener() {
+    private val logger: Logger = LoggerFactory.getLogger(RedisStatisticListener::class.java)
     private lateinit var redisson: RedissonClient
     private val map by lazy { redisson.getMap<String, Int>(name) }
-
-    private val logger: Logger = LoggerFactory.getLogger(DefaultStatisticListener::class.java)
     private lateinit var job: Job
     private var startTime: Long = 0
 
