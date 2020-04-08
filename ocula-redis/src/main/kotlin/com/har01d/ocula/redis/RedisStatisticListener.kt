@@ -13,12 +13,7 @@ import org.redisson.config.Config
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class RedisStatisticListener(
-    name: String,
-    connection: String = "redis://127.0.0.1:6379",
-    private val shutdownRedisson: Boolean = false
-) : StatisticListener() {
-    override val order: Int = 10000
+class RedisStatisticListener(name: String, connection: String = "redis://127.0.0.1:6379") : StatisticListener() {
     private lateinit var redisson: RedissonClient
     private val map by lazy { redisson.getMap<String, Int>(name) }
 
@@ -26,11 +21,7 @@ class RedisStatisticListener(
     private lateinit var job: Job
     private var startTime: Long = 0
 
-    constructor(name: String, redisson: RedissonClient, shutdownRedisson: Boolean = false) : this(
-        name,
-        "",
-        shutdownRedisson
-    ) {
+    constructor(name: String, redisson: RedissonClient) : this(name, "") {
         this.redisson = redisson
     }
 
@@ -94,9 +85,6 @@ class RedisStatisticListener(
         val endTime = System.currentTimeMillis()
         map["endTime"] = endTime.toInt()
         map.addAndGetAsync("elapsed", (endTime - startTime))
-        if (shutdownRedisson) {
-            redisson.shutdown()
-        }
     }
 
     private fun log(finished: Boolean = false) {

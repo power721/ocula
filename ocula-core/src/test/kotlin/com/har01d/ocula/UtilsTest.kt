@@ -51,12 +51,12 @@ class UtilsTest {
 
     @Test
     fun testDuration() {
-        assertEquals("5.000", 5000L.toDuration())
-        assertEquals("5.123", 5123L.toDuration())
-        assertEquals("50.000", 50000L.toDuration())
-        assertEquals("50.045", 50045L.toDuration())
-        assertEquals("01:00.000", 60000L.toDuration())
-        assertEquals("10:00.000", 600000L.toDuration())
+        assertEquals("00:00:05.000", 5000L.toDuration())
+        assertEquals("00:00:05.123", 5123L.toDuration())
+        assertEquals("00:00:50.000", 50000L.toDuration())
+        assertEquals("00:00:50.045", 50045L.toDuration())
+        assertEquals("00:01:00.000", 60000L.toDuration())
+        assertEquals("00:10:00.000", 600000L.toDuration())
         assertEquals("01:00:00.000", 3600000L.toDuration())
         assertEquals("101:01:15.456", 363675456L.toDuration())
     }

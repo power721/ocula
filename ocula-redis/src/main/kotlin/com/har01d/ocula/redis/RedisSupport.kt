@@ -30,15 +30,17 @@ fun <T> Spider<T>.enableRedis(
 ) {
     parser.queue = RedisRequestQueue("$keyPrefix-p-queue", redisson)
     parser.dedupHandler = RedisDedupHandler("$keyPrefix-set", redisson)
-    statisticListener = RedisStatisticListener("$keyPrefix-stat", redisson, shutdownRedisson)
+    statisticListener = RedisStatisticListener("$keyPrefix-stat", redisson)
     listeners += RedisErrorListener("$keyPrefix-failed", redisson)
+    if (shutdownRedisson) listeners += RedissonShutdownListener(redisson)
     if (includeCrawler && crawler != null) {
         crawler!!.dedupHandler = parser.dedupHandler
         crawler!!.queue = RedisRequestQueue("$keyPrefix-c-queue", redisson)
     }
 }
 
-class RedissonListener(private val redisson: RedissonClient) : AbstractListener() {
+class RedissonShutdownListener(private val redisson: RedissonClient) : AbstractListener() {
+    override val order: Int = Int.MAX_VALUE
     override fun onShutdown() {
         redisson.shutdown()
     }

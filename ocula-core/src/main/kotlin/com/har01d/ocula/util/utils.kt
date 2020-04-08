@@ -17,33 +17,21 @@ fun generateId(length: Int): String {
 }
 
 fun normalizeUrl(refer: String, url: String) =
-        try {
-            val base = URL(refer)
-            val uri = if (url.startsWith("?")) base.path + url else url
-            URL(base, uri).toExternalForm()
-        } catch (e: MalformedURLException) {
-            null
-        }
+    try {
+        val base = URL(refer)
+        val uri = if (url.startsWith("?")) base.path + url else url
+        URL(base, uri).toExternalForm()
+    } catch (e: MalformedURLException) {
+        null
+    }
 
 fun Long.toDuration(): String {
     val seconds = this / 1000
     val ms = this % 1000
-    return when {
-        seconds < 60 -> {
-            String.format("%d.%03d", seconds, ms)
-        }
-        seconds < 60 * 60 -> {
-            val m = seconds / 60
-            val s = seconds % 60
-            String.format("%02d:%02d.%03d", m, s, ms)
-        }
-        else -> {
-            val h = seconds / 3600
-            val m = seconds % 3600 / 60
-            val s = seconds % 60
-            String.format("%02d:%02d:%02d.%03d", h, m, s, ms)
-        }
-    }
+    val h = seconds / 3600
+    val m = seconds % 3600 / 60
+    val s = seconds % 60
+    return String.format("%02d:%02d:%02d.%03d", h, m, s, ms)
 }
 
 fun String.path(): String {
