@@ -20,6 +20,7 @@
     <modules>
         <module>ocula-core</module>
         <module>ocula-image</module>
+        <module>ocula-ocr</module>
         <module>ocula-redis</module>
         <module>ocula-selenium</module>
         <module>ocula-extension</module>
