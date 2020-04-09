@@ -10,10 +10,9 @@ import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.listener.LogListener
 import com.har01d.ocula.parser.AbstractParser
-import kotlinx.coroutines.runBlocking
 
 
-fun main() = runBlocking {
+fun main() {
     val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/") {
         config.authHandler = CsrfFormAuthHandler()
         listeners += LogListener
@@ -21,7 +20,7 @@ fun main() = runBlocking {
         resultHandlers += TextFileResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/text")
         resultHandlers += HtmlResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/html")
     }
-    spider.start()
+    spider.run()
 }
 
 class QuotesParser : AbstractParser<List<Quote>>() {

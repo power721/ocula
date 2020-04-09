@@ -1,22 +1,25 @@
 package com.har01d.ocula.redis
 
+import com.har01d.ocula.SpiderThreadFactory
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.listener.StatisticListener
 import com.har01d.ocula.util.toDuration
-import kotlinx.coroutines.*
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.codec.JsonJacksonCodec
 import org.redisson.config.Config
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class RedisStatisticListener(name: String, connection: String = "redis://127.0.0.1:6379") : StatisticListener() {
     private val logger: Logger = LoggerFactory.getLogger(RedisStatisticListener::class.java)
     private lateinit var redisson: RedissonClient
     private val map by lazy { redisson.getMap<String, Int>(name) }
-    private lateinit var job: Job
+    private lateinit var executor: ScheduledExecutorService
     private var startTime: Long = 0
 
     constructor(name: String, redisson: RedissonClient) : this(name, "") {
@@ -36,12 +39,8 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
         startTime = System.currentTimeMillis()
         map.addAndGetAsync("id", 1)
         map["startTime"] = startTime.toInt()
-        job = GlobalScope.launch {
-            while (isActive) {
-                delay(30000)
-                log()
-            }
-        }
+        executor = Executors.newSingleThreadScheduledExecutor(SpiderThreadFactory("Statistic"))
+        executor.scheduleWithFixedDelay({ log() }, 30, 30, TimeUnit.SECONDS)
     }
 
     override fun onSkip(request: Request) {
@@ -77,7 +76,7 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
     }
 
     override fun onShutdown() {
-        job.cancel()
+        executor.shutdown()
         val endTime = System.currentTimeMillis()
         map["endTime"] = endTime.toInt()
         map.addAndGetAsync("elapsed", (endTime - startTime))

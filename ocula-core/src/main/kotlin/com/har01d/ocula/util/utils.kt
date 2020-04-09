@@ -4,6 +4,7 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.security.MessageDigest
 import java.util.concurrent.ThreadLocalRandom
+import kotlin.math.min
 
 val TOKENS = "Ok4jShBpcvKY5gTQMVRsEHfGe3nDdb81IJwrqLFP0UC6xilazo2ZWut9yNmA7X".toCharArray()
 
@@ -46,6 +47,8 @@ fun String.md5(): String {
     val bytes = MessageDigest.getInstance("MD5").digest(this.toByteArray())
     return bytes.toHex()
 }
+
+fun String.truncate(len: Int) = substring(0, min(len, this.length))
 
 fun ByteArray.toHex(): String {
     return joinToString("") { "%02x".format(it) }

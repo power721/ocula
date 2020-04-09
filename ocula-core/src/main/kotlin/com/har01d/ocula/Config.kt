@@ -32,6 +32,7 @@ open class Config {
     val crawler = CrawlerConfig()
     val parser = ParserConfig()
     var interval: Long = 500L
+    var completeOnIdleTime = 300
     var authHandler: AuthHandler? = null
 
     class HttpConfig {

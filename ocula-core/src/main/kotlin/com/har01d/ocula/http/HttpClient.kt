@@ -3,11 +3,13 @@ package com.har01d.ocula.http
 import com.github.kittinunf.fuel.*
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.result.Result
+import com.har01d.ocula.SpiderThreadFactory
 import com.har01d.ocula.util.generateId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.HttpCookie
 import java.nio.charset.Charset
+import java.util.concurrent.Executors
 import kotlin.Result as KResult
 
 interface HttpClient {
@@ -27,6 +29,10 @@ abstract class AbstractHttpClient : HttpClient {
 class FuelHttpClient : AbstractHttpClient() {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(FuelHttpClient::class.java)
+
+        init {
+            FuelManager.instance.executorService = Executors.newCachedThreadPool(SpiderThreadFactory("Fuel"))
+        }
     }
 
     // TODO: auto detect html charset

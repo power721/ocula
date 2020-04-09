@@ -12,13 +12,15 @@ import com.har01d.ocula.queue.InMemoryRequestQueue
 import com.har01d.ocula.queue.RequestQueue
 import com.har01d.ocula.util.normalizeUrl
 import com.har01d.ocula.util.path
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.thread
 
 
 typealias Configure<T> = Spider<T>.() -> Unit
@@ -44,7 +46,6 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     private var finished = false
     private var aborted = false
     private var stoped = false
-    private var coroutineContext: CoroutineContext = EmptyCoroutineContext
 
     constructor(parser: Parser<T>, vararg url: String, configure: Configure<T> = {})
             : this(null, parser, configure) {
@@ -176,7 +177,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                     logger.debug("Skip {}", req.url)
                     continue
                 }
-                if (!dedupHandler.handle(req)) {
+                if (!dedupHandler.shouldVisit(req)) {
                     logger.debug("Ignore {}", req.url)
                     continue
                 }
@@ -227,16 +228,15 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     /**
-     * Start the Spider and block the current thread.
+     * Start the Spider in new thread.
      */
-    fun run() = runBlocking {
-        start()
+    fun start() {
+        thread(name = "Spider-" + id.getAndIncrement()) {
+            run()
+        }
     }
 
-    /**
-     * Start the Spider in coroutine.
-     */
-    suspend fun start() {
+    fun run() {
         validate()
         prepare()
 
@@ -244,32 +244,30 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         listeners.forEach { it.onStart() }
         preHandle()
 
-        val jobs = mutableListOf<Job>()
+        val futures = mutableListOf<Future<*>>()
 
+        var crawlerExecutor: ExecutorService? = null
         if (crawler != null) {
             crawl(requests[0].url.path(), *requests.toTypedArray())
 
             crawler.context = this@Spider
+            crawlerExecutor = Executors.newFixedThreadPool(config.crawler.concurrency, SpiderThreadFactory("Crawler"))
             repeat(config.crawler.concurrency) {
-                val job = GlobalScope.plus(coroutineContext).launch {
-                    crawl(this)
-                }
-                jobs += job
+                futures += crawlerExecutor.submit { crawl() }
             }
         } else {
             follow(requests[0].url.path(), *requests.toTypedArray())
         }
 
         parser.context = this@Spider
-        val scope = CoroutineScope(coroutineContext)
+        val parserExecutor = Executors.newFixedThreadPool(config.parser.concurrency, SpiderThreadFactory("Parser"))
         repeat(config.parser.concurrency) {
-            val job = scope.launch {
-                parse(this)
-            }
-            jobs += job
+            futures += parserExecutor.submit { parse() }
         }
-        jobs.forEach { it.join() }
+        futures.forEach { it.get() }
 
+        parserExecutor.shutdown()
+        crawlerExecutor?.shutdown()
         postHandle()
         when (status) {
             Status.CANCELLED -> listeners.forEach { it.onCancel() }
@@ -303,7 +301,6 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 1
             }
         }
-        coroutineContext = newFixedThreadPoolContext(config.parser.concurrency, "Spider-" + id.getAndIncrement())
         if (resultHandlers.isEmpty()) {
             resultHandlers += ConsoleLogResultHandler
         }
@@ -333,6 +330,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
             proxyProvider = proxyProvider ?: RoundRobinProxyProvider(proxies)
         }
+        activeTime.set(System.currentTimeMillis())
         listeners.sortBy { it.order }
         initHttpClient()
     }
@@ -396,14 +394,16 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     private val count = AtomicInteger(0)
+    private val activeTime = AtomicLong()
 
-    private suspend fun crawl(scope: CoroutineScope) {
+    private fun crawl() {
         var referer: String? = null
         status = Status.RUNNING
-        while (scope.isActive) {
+        while (true) {
             val request = crawler!!.queue!!.poll(1000L)
             if (request != null) {
                 try {
+                    activeTime.set(System.currentTimeMillis())
                     count.incrementAndGet()
                     setHeaders(request, referer)
                     crawler.httpClient!!.dispatch(request) { result ->
@@ -430,7 +430,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                     }
                     referer = request.url
 
-                    delay(config.interval)
+                    Thread.sleep(config.interval)
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
                     if (config.crawler.abortOnError) abort()
@@ -444,13 +444,14 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         }
     }
 
-    private suspend fun parse(scope: CoroutineScope) {
+    private fun parse() {
         var referer: String? = null
         status = Status.RUNNING
-        while (scope.isActive) {
+        while (true) {
             val request = parser.queue!!.poll(1000L)
             if (request != null) {
                 try {
+                    activeTime.set(System.currentTimeMillis())
                     count.incrementAndGet()
                     setHeaders(request, referer)
                     parser.httpClient!!.dispatch(request) { res ->
@@ -492,12 +493,17 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                     }
                     referer = request.url
 
-                    delay(config.interval)
+                    Thread.sleep(config.interval)
                 } catch (e: Exception) {
                     listeners.forEach { it.onError(e) }
                     if (config.parser.abortOnError) abort()
                     logger.warn("Handle page {} failed", request.url, e)
                 }
+            }
+
+            if (config.completeOnIdleTime > 0 && (System.currentTimeMillis() - activeTime.get()) >= config.completeOnIdleTime * 1000) {
+                if (!finished) logger.info("No work for ${config.completeOnIdleTime} seconds, complete Spider $name.")
+                finished = true
             }
 
             if (stoped || (finished && (crawler?.queue?.isEmpty() != false) && parser.queue!!.isEmpty() && count.get() == 0)) {

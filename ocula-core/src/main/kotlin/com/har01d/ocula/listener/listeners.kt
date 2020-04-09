@@ -1,12 +1,15 @@
 package com.har01d.ocula.listener
 
 import com.har01d.ocula.Spider
+import com.har01d.ocula.SpiderThreadFactory
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.util.toDuration
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 interface Listener {
     val order: Int
@@ -49,7 +52,7 @@ abstract class StatisticListener : AbstractListener() {
 
 class DefaultStatisticListener : StatisticListener() {
     private val logger: Logger = LoggerFactory.getLogger(DefaultStatisticListener::class.java)
-    private lateinit var job: Job
+    private lateinit var executor: ScheduledExecutorService
     private var skipped = 0
     private var downloaded = 0
     private var crawled = 0
@@ -59,12 +62,8 @@ class DefaultStatisticListener : StatisticListener() {
 
     override fun onStart() {
         startTime = System.currentTimeMillis()
-        job = GlobalScope.launch {
-            while (isActive) {
-                delay(30000)
-                log()
-            }
-        }
+        executor = Executors.newSingleThreadScheduledExecutor(SpiderThreadFactory("Statistic"))
+        executor.scheduleWithFixedDelay({ log() }, 30, 30, TimeUnit.SECONDS)
     }
 
     override fun onSkip(request: Request) {
@@ -100,7 +99,7 @@ class DefaultStatisticListener : StatisticListener() {
     }
 
     override fun onShutdown() {
-        job.cancel()
+        executor.shutdown()
     }
 
     private fun log(finished: Boolean = false) {
@@ -113,8 +112,9 @@ class DefaultStatisticListener : StatisticListener() {
             ""
         }
         val name = spider.name
-        logger.info("$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
-                "Skipped pages: $skipped $queue Errors: $errors  Time: $time"
+        logger.info(
+            "$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
+                    "Skipped pages: $skipped $queue Errors: $errors  Time: $time"
         )
     }
 }

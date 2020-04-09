@@ -39,6 +39,7 @@ open class Selector(private val body: String) {
         }
     }
 
+    // https://jsoup.org/cookbook/extracting-data/selector-syntax
     fun select(cssQuery: String): Elements = document.select(cssQuery)
 
     fun select(cssQuery: String, attr: String): String = document.select(cssQuery).attr(attr)
