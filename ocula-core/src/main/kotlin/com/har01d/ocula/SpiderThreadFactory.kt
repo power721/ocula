@@ -6,13 +6,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class SpiderThreadFactory(namePrefix: String) : ThreadFactory {
     companion object {
-        private val poolNumber = AtomicInteger(1)
+        private val map = mutableMapOf<String, AtomicInteger>()
     }
 
-    private val threadNumber = AtomicInteger(1)
-    private val name: String = namePrefix + "-" + poolNumber.getAndIncrement() + "-"
+    private val number = AtomicInteger(1)
+    private val name: String
 
-    override fun newThread(r: Runnable) = Thread(r, name + threadNumber.getAndIncrement()).apply {
+    init {
+        val id = map.getOrDefault(namePrefix, AtomicInteger(1))
+        map[namePrefix] = id
+        name = "$namePrefix-" + id.getAndIncrement() + "-"
+    }
+
+    override fun newThread(r: Runnable) = Thread(r, name + number.getAndIncrement()).apply {
         isDaemon = true
         priority = Thread.NORM_PRIORITY
     }
