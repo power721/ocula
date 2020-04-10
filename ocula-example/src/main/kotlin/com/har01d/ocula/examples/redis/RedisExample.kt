@@ -4,6 +4,7 @@ import com.har01d.ocula.Spider
 import com.har01d.ocula.crawler.AbstractCrawler
 import com.har01d.ocula.examples.crawler.QQCourseParser
 import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.RequestBody
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.redis.enableRedis
 import com.har01d.ocula.util.path
@@ -20,7 +21,7 @@ class QQCourseCrawler : AbstractCrawler() {
             if (url.matches("/course/list\\?mt=\\d+".toRegex())) {
                 crawl(response, url)
             } else if (url.matches("(https:)?//ke.qq.com/course/\\d+.*".toRegex())) {
-                follow(response, url.path())
+                follow(response, Request(url.path(), body = RequestBody.text("Hello!")))
             }
         }
     }
