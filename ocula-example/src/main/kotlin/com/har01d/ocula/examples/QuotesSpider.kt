@@ -5,9 +5,10 @@ import com.har01d.ocula.handler.AuthHandler
 import com.har01d.ocula.handler.ConsoleLogResultHandler
 import com.har01d.ocula.handler.HtmlResultHandler
 import com.har01d.ocula.handler.TextFileResultHandler
-import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.RequestBody
 import com.har01d.ocula.http.Response
+import com.har01d.ocula.http.post
 import com.har01d.ocula.listener.LogListener
 import com.har01d.ocula.parser.AbstractParser
 
@@ -46,11 +47,13 @@ class CsrfFormAuthHandler : AuthHandler() {
         val url = "http://quotes.toscrape.com/login"
         val res = dispatch(Request(url))
         val token = res.select("input[name=csrf_token]").`val`()
-        val formRequest = Request(url, HttpMethod.POST, listOf(
+        val formRequest = url.post(
+            body = RequestBody.form(
                 "csrf_token" to token,
                 "username" to "user",
                 "password" to "user"
-        ), cookies = res.cookies.toMutableList(), allowRedirects = false)
+            ), cookies = res.cookies.toMutableList(), allowRedirects = false
+        )
         dispatch(formRequest).apply {
             request.cookies += cookies
         }

@@ -4,6 +4,7 @@ import com.har01d.ocula.SimpleSpider
 import com.har01d.ocula.handler.AuthHandler
 import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
+import com.har01d.ocula.http.RequestBody
 
 
 fun main() {
@@ -17,12 +18,12 @@ fun main() {
 
 class LoginHandler(private val username: String, private val password: String) : AuthHandler() {
     override fun handle(request: Request) {
-        val params = listOf(
+        val body = RequestBody.form(
                 "name" to username,
                 "password" to password,
                 "remember" to "true"
         )
-        val req = Request("https://accounts.douban.com/j/mobile/login/basic", HttpMethod.POST, params)
+        val req = Request("https://accounts.douban.com/j/mobile/login/basic", HttpMethod.POST, body)
         val res = dispatch(req)
         res.cookies.find { it.name == "dbcl2" }?.let {
             request.cookies += it

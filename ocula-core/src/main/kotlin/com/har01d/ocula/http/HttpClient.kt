@@ -102,12 +102,12 @@ class FuelHttpClient : AbstractHttpClient() {
             FuelManager.instance.proxy = null
         }
         val req = when (request.method) {
-            HttpMethod.GET -> request.url.httpGet(request.parameters)
-            HttpMethod.POST -> request.url.httpPost(request.parameters)
-            HttpMethod.PUT -> request.url.httpPut(request.parameters)
-            HttpMethod.PATCH -> request.url.httpPatch(request.parameters)
-            HttpMethod.DELETE -> request.url.httpDelete(request.parameters)
-            HttpMethod.HEAD -> request.url.httpHead(request.parameters)
+            HttpMethod.GET -> request.url.httpGet()
+            HttpMethod.POST -> request.url.httpPost()
+            HttpMethod.PUT -> request.url.httpPut()
+            HttpMethod.PATCH -> request.url.httpPatch()
+            HttpMethod.DELETE -> request.url.httpDelete()
+            HttpMethod.HEAD -> request.url.httpHead()
         }
         req.allowRedirects(request.allowRedirects)
         if (request.cookies.isNotEmpty()) {
@@ -125,6 +125,7 @@ class FuelHttpClient : AbstractHttpClient() {
                 is JsonRequestBody -> req.jsonBody(it.json)
                 is BytesRequestBody -> req.body(it.bytes)
                 is FileRequestBody -> req.body(it.file)
+                is FormRequestBody -> req.parameters = it.form.toList()
             }
         }
         return Pair(id, req)

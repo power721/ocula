@@ -1,5 +1,6 @@
 package com.har01d.ocula.handler
 
+import com.har01d.ocula.http.FormRequestBody
 import com.har01d.ocula.http.HttpMethod
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
@@ -39,11 +40,11 @@ val sessionHandler = fun(request: Request, response: Response) {
 
 class FormAuthHandler(
     private val actionUrl: String,
-    private val parameters: Parameters,
+    private val body: FormRequestBody,
     val block: AuthConfigure = sessionHandler
 ) : AuthHandler() {
     override fun handle(request: Request) {
-        val formRequest = Request(actionUrl, HttpMethod.POST, parameters)
+        val formRequest = Request(actionUrl, HttpMethod.POST, body)
         val response = dispatch(formRequest)
         block(request, response)
     }
