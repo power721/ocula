@@ -15,6 +15,7 @@ import com.har01d.ocula.util.path
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -218,7 +219,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     /**
      * Abort the Spider because of error, wait tasks in queue finish.
      */
-    override fun abort() {
+    override fun abort(stop: Boolean) {
+        stoped = stop
         aborted = true
         finished = true
     }
@@ -260,7 +262,14 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             crawler.context = this@Spider
             crawlerExecutor = Executors.newFixedThreadPool(config.crawler.concurrency, SpiderThreadFactory("Crawler"))
             repeat(config.crawler.concurrency) {
-                futures += crawlerExecutor.submit { crawl() }
+                futures += crawlerExecutor.submit {
+                    try {
+                        crawl()
+                    } catch (e: Exception) {
+                        abort(true)
+                        logger.warn("crawl failed", e)
+                    }
+                }
             }
         } else {
             follow(requests[0].url.path(), *requests.toTypedArray())
@@ -269,18 +278,29 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         parser.context = this@Spider
         val parserExecutor = Executors.newFixedThreadPool(config.parser.concurrency, SpiderThreadFactory("Parser"))
         repeat(config.parser.concurrency) {
-            futures += parserExecutor.submit { parse() }
+            futures += parserExecutor.submit {
+                try {
+                    parse()
+                } catch (e: Exception) {
+                    abort(true)
+                    logger.warn("parse failed", e)
+                }
+            }
         }
-        futures.forEach { it.get() }
+
+        futures.forEach {
+            try {
+                it.get()
+            } catch (e: ExecutionException) {
+                abort(true)
+                logger.warn("execute failed", e)
+            }
+        }
 
         parserExecutor.shutdown()
         crawlerExecutor?.shutdown()
         postHandle()
-        when (status) {
-            Status.CANCELLED -> listeners.forEach { it.onCancel() }
-            Status.ABORTED -> listeners.forEach { it.onCancel() }
-            else -> listeners.forEach { it.onComplete() }
-        }
+
         listeners.forEach { it.onShutdown() }
         logger.info("Spider $name is $status")
     }
@@ -420,6 +440,11 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         parser.httpClient?.close()
         if (status == Status.RUNNING) {
             status = if (aborted) Status.ABORTED else Status.COMPLETED
+        }
+        when (status) {
+            Status.CANCELLED -> listeners.forEach { it.onCancel() }
+            Status.ABORTED -> listeners.forEach { it.onCancel() }
+            else -> listeners.forEach { it.onComplete() }
         }
     }
 

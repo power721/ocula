@@ -12,6 +12,6 @@ interface Context {
     fun follow(refer: String, vararg requests: Request): Boolean
     fun dispatch(request: Request): Response
     fun stop()
-    fun abort()
+    fun abort(stop: Boolean = false)
     fun finish()
 }
