@@ -16,6 +16,8 @@ interface HttpClient {
     var userAgentProvider: UserAgentProvider
     var proxyProvider: ProxyProvider
     var charset: Charset
+    var timeout: Int
+    var timeoutRead: Int
     fun dispatch(request: Request): Response
     fun dispatch(request: Request, handler: (result: KResult<Response>) -> Unit)
 }
@@ -23,7 +25,9 @@ interface HttpClient {
 abstract class AbstractHttpClient : HttpClient {
     override lateinit var userAgentProvider: UserAgentProvider
     override lateinit var proxyProvider: ProxyProvider
-    override lateinit var charset: Charset
+    override var charset: Charset = Charsets.UTF_8
+    override var timeout: Int = 15000
+    override var timeoutRead: Int = 15000
 }
 
 class FuelHttpClient : AbstractHttpClient() {
@@ -40,20 +44,21 @@ class FuelHttpClient : AbstractHttpClient() {
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
         val (id, req) = prepare(request)
-        val (_, response, result) = req.header(request.headers.toMap()).responseString(request.charset ?: charset)
+        val (_, response, result) = req.header(request.headers.toMap()).timeout(timeout).timeoutRead(timeoutRead)
+            .responseString(request.charset ?: charset)
         when (result) {
             is Result.Failure -> throw result.getException()
             is Result.Success -> {
                 logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
                 return Response(
-                        response.url.toExternalForm(),
-                        result.value,
-                        response.statusCode,
-                        response.responseMessage,
-                        response.headers,
-                        response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
-                        response.contentLength,
-                        System.currentTimeMillis() - start
+                    response.url.toExternalForm(),
+                    result.value,
+                    response.statusCode,
+                    response.responseMessage,
+                    response.headers,
+                    response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
+                    response.contentLength,
+                    System.currentTimeMillis() - start
                 )
             }
         }
@@ -68,14 +73,14 @@ class FuelHttpClient : AbstractHttpClient() {
                 is Result.Success -> {
                     logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
                     val res = Response(
-                            response.url.toExternalForm(),
-                            result.value,
-                            response.statusCode,
-                            response.responseMessage,
-                            response.headers,
-                            response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
-                            response.contentLength,
-                            System.currentTimeMillis() - start
+                        response.url.toExternalForm(),
+                        result.value,
+                        response.statusCode,
+                        response.responseMessage,
+                        response.headers,
+                        response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
+                        response.contentLength,
+                        System.currentTimeMillis() - start
                     )
                     handler(KResult.success(res))
                 }

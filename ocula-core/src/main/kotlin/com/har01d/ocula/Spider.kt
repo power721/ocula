@@ -32,7 +32,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     override lateinit var name: String
-    open val config = Config()
+    override val config = Config()
     val preHandlers = mutableListOf<PreHandler>()
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
@@ -342,6 +342,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             client.userAgentProvider = config.http.userAgentProvider!!
             client.proxyProvider = config.http.proxyProvider!!
             client.charset = config.http.charset
+            client.timeout = config.http.timeout
+            client.timeoutRead = config.http.timeoutRead
         }
 
         parser.httpClient = parser.httpClient ?: httpClient
@@ -349,6 +351,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         client.userAgentProvider = config.http.userAgentProvider!!
         client.proxyProvider = config.http.proxyProvider!!
         client.charset = config.http.charset
+        client.timeout = config.http.timeout
+        client.timeoutRead = config.http.timeoutRead
     }
 
     open fun preHandle() {

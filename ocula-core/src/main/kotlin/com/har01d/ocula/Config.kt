@@ -71,7 +71,8 @@ open class Config {
 
         var base = ""
         var charset: Charset = Charsets.UTF_8
-        var timeout = 30000
+        var timeout = 15000
+        var timeoutRead = 15000
 
         var userAgents: List<String> = defaultUserAgents
         var userAgentProvider: UserAgentProvider? = null
