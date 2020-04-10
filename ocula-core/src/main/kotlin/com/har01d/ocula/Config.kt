@@ -65,7 +65,7 @@ open class Config {
 
         private val defaultHttpHeaders = mapOf(
                 "Accept" to listOf("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"),
-                "Accept-Encoding" to listOf("gzip, deflate"),  // do not support br
+            "Accept-Encoding" to listOf("gzip", "deflate"),  // do not support br
                 "Accept-Language" to listOf("en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,ja;q=0.6,zh-TW;q=0.5")
         )
 

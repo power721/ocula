@@ -381,6 +381,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 }
             }
         }
+        crawler?.httpClient?.close()
+        parser.httpClient?.close()
         if (status == Status.RUNNING) {
             status = if (aborted) Status.ABORTED else Status.COMPLETED
         }

@@ -15,6 +15,10 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
 
     var actionHandler: SeleniumActionHandler? = null
 
+    override fun close() {
+        webDriverProvider.clean()
+    }
+
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
         logger.debug("[Request] handle ${request.url}")

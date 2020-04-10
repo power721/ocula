@@ -57,11 +57,6 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
         super.initHttpClient()
     }
 
-    override fun postHandle() {
-        webDriverProvider!!.clean()
-        super.postHandle()
-    }
-
     fun phantomjs(execPath: String): SeleniumSpider<T> {
         config.driverType = DriverType.PHANTOMJS
         config.phantomjsExecPath = execPath

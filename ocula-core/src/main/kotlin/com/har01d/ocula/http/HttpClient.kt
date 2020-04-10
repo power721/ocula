@@ -12,7 +12,7 @@ import java.nio.charset.Charset
 import java.util.concurrent.Executors
 import kotlin.Result as KResult
 
-interface HttpClient {
+interface HttpClient : AutoCloseable {
     var userAgentProvider: UserAgentProvider
     var proxyProvider: ProxyProvider
     var charset: Charset
@@ -20,6 +20,7 @@ interface HttpClient {
     var timeoutRead: Int
     fun dispatch(request: Request): Response
     fun dispatch(request: Request, handler: (result: KResult<Response>) -> Unit)
+    override fun close()
 }
 
 abstract class AbstractHttpClient : HttpClient {
@@ -39,7 +40,9 @@ class FuelHttpClient : AbstractHttpClient() {
         }
     }
 
-    // TODO: auto detect html charset
+    override fun close() {}
+
+// TODO: auto detect html charset
 
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
