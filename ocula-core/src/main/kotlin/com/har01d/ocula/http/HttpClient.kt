@@ -2,6 +2,7 @@ package com.har01d.ocula.http
 
 import com.github.kittinunf.fuel.*
 import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.result.Result
 import com.har01d.ocula.SpiderThreadFactory
 import com.har01d.ocula.util.generateId
@@ -47,8 +48,7 @@ class FuelHttpClient : AbstractHttpClient() {
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
         val (id, req) = prepare(request)
-        val (_, response, result) = req.header(request.headers.toMap()).timeout(timeout).timeoutRead(timeoutRead)
-            .responseString(request.charset ?: charset)
+        val (_, response, result) = req.responseString(request.charset ?: charset)
         when (result) {
             is Result.Failure -> throw result.getException()
             is Result.Success -> {
@@ -70,7 +70,7 @@ class FuelHttpClient : AbstractHttpClient() {
     override fun dispatch(request: Request, handler: (result: KResult<Response>) -> Unit) {
         val start = System.currentTimeMillis()
         val (id, req) = prepare(request)
-        req.header(request.headers.toMap()).responseString(request.charset ?: charset) { _, response, result ->
+        req.responseString(request.charset ?: charset) { _, response, result ->
             when (result) {
                 is Result.Failure -> handler(KResult.failure(result.getException()))
                 is Result.Success -> {
@@ -115,6 +115,17 @@ class FuelHttpClient : AbstractHttpClient() {
         }
         if (userAgentProvider.hasAny()) {
             req.header("User-Agent", userAgentProvider.select())
+        }
+        req.header(request.headers.toMap())
+        req.timeout(timeout)
+        req.timeoutRead(timeoutRead)
+        request.body?.let {
+            when (it) {
+                is TextRequestBody -> req.body(it.text)
+                is JsonRequestBody -> req.jsonBody(it.json)
+                is BytesRequestBody -> req.body(it.bytes)
+                is FileRequestBody -> req.body(it.file)
+            }
         }
         return Pair(id, req)
     }
