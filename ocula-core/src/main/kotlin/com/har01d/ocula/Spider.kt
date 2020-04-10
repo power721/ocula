@@ -99,6 +99,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         }
     }
 
+    fun mobile() {
+        config.http.mobile()
+    }
+
     fun basicAuth(username: String, password: String) {
         config.authHandler = BasicAuthHandler(username, password)
     }
