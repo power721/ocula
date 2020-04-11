@@ -14,6 +14,7 @@ import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.*
+import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.concurrent.FutureCallback
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.entity.ContentType
@@ -163,12 +164,14 @@ class ApacheHttpClient : AbstractHttpClient() {
         HttpClients.custom()
             .setMaxConnPerRoute(10)
             .setDefaultCookieStore(cookieStore)
+            .setRedirectStrategy(SpiderRedirectStrategy)
             .build()
     }
 
     private val asyncClient = HttpAsyncClients.custom()
         .setMaxConnPerRoute(10)
         .setDefaultCookieStore(cookieStore)
+        .setRedirectStrategy(SpiderRedirectStrategy)
         .setThreadFactory(SpiderThreadFactory("HTTP"))
         .build()
 
@@ -181,12 +184,14 @@ class ApacheHttpClient : AbstractHttpClient() {
         logger.debug("[Request][$id] ${request.method} ${request.url}")
         val start = System.currentTimeMillis()
         val httpRequest = convertRequest(request)
-        client.execute(httpRequest).use { response ->
+        val context = HttpClientContext.create()
+        client.execute(httpRequest, context).use { response ->
             val contentLength = response.entity.contentLength
             logger.debug("[Response][$id] status code: ${response.statusLine.statusCode}  content length: $contentLength")
             val headers = convertHeaders(response.allHeaders)
+            val url = context.getAttribute("uri") as String? ?: request.url
             return Response(
-                request.url,
+                url,
                 EntityUtils.toString(response.entity),
                 response.statusLine.statusCode,
                 response.statusLine.reasonPhrase,
@@ -203,15 +208,17 @@ class ApacheHttpClient : AbstractHttpClient() {
         logger.debug("[Request][$id] ${request.method} ${request.url}")
         val start = System.currentTimeMillis()
         val httpRequest = convertRequest(request)
-        asyncClient.execute(httpRequest, object : FutureCallback<HttpResponse> {
+        val context = HttpClientContext.create()
+        asyncClient.execute(httpRequest, context, object : FutureCallback<HttpResponse> {
             override fun cancelled() {}
 
             override fun completed(response: HttpResponse) {
                 val contentLength = response.entity.contentLength
                 logger.debug("[Response][$id] status code: ${response.statusLine.statusCode}  content length: $contentLength")
                 val headers = convertHeaders(response.allHeaders)
+                val url = context.getAttribute("uri") as String? ?: request.url
                 val res = Response(
-                    request.url,
+                    url,
                     EntityUtils.toString(response.entity),
                     response.statusLine.statusCode,
                     response.statusLine.reasonPhrase,

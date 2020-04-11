@@ -15,7 +15,6 @@ import com.har01d.ocula.util.path
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URL
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -291,7 +290,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         futures.forEach {
             try {
                 it.get()
-            } catch (e: ExecutionException) {
+            } catch (e: Exception) {
                 abort(true)
                 logger.warn("execute failed", e)
             }

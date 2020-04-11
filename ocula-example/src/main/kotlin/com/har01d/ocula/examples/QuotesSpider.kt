@@ -52,7 +52,7 @@ class CsrfFormAuthHandler : AuthHandler() {
                 "csrf_token" to token,
                 "username" to "user",
                 "password" to "user"
-            ), allowRedirects = false
+            )
         )
         dispatch(formRequest)
     }
