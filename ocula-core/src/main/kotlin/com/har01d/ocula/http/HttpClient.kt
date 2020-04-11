@@ -25,8 +25,8 @@ interface HttpClient : AutoCloseable {
 }
 
 abstract class AbstractHttpClient : HttpClient {
-    override lateinit var userAgentProvider: UserAgentProvider
-    override lateinit var proxyProvider: ProxyProvider
+    override var userAgentProvider: UserAgentProvider = EmptyUserAgentProvider
+    override var proxyProvider: ProxyProvider = EmptyProxyProvider
     override var charset: Charset = Charsets.UTF_8
     override var timeout: Int = 15000
     override var timeoutRead: Int = 15000

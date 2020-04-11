@@ -403,8 +403,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     private fun configHttpClient(client: HttpClient) {
-        client.userAgentProvider = config.http.userAgentProvider!!
-        client.proxyProvider = config.http.proxyProvider!!
+        if (client.userAgentProvider is EmptyUserAgentProvider)
+            client.userAgentProvider = config.http.userAgentProvider!!
+        if (client.proxyProvider is EmptyProxyProvider)
+            client.proxyProvider = config.http.proxyProvider!!
         client.charset = config.http.charset
         client.timeout = config.http.timeout
         client.timeoutRead = config.http.timeoutRead

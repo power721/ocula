@@ -43,5 +43,12 @@ class RandomProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RandomP
 class RoundRobinProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RoundRobinProvider<HttpProxy>(httpProxies)
 
 interface UserAgentProvider : Provider<String>
+object EmptyUserAgentProvider : UserAgentProvider {
+    override fun select(): String {
+        throw NotImplementedError()
+    }
+
+    override fun hasAny() = false
+}
 class RandomUserAgentProvider(userAgents: List<String>) : UserAgentProvider, RandomProvider<String>(userAgents)
 class RoundRobinUserAgentProvider(userAgents: List<String>) : UserAgentProvider, RoundRobinProvider<String>(userAgents)
