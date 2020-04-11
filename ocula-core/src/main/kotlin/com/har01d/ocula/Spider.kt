@@ -39,7 +39,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener>()
     var statisticListener: StatisticListener = DefaultStatisticListener()
-    var httpClient: HttpClient = FuelHttpClient()
+    var httpClient: HttpClient = ApacheHttpClient()
     private val requests = mutableListOf<Request>()
 
     private var thread: Thread? = null

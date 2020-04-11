@@ -48,15 +48,13 @@ class CsrfFormAuthHandler : AuthHandler() {
         val res = dispatch(Request(url))
         val token = res.select("input[name=csrf_token]").`val`()
         val formRequest = url.post(
-            body = RequestBody.form(
+            RequestBody.form(
                 "csrf_token" to token,
                 "username" to "user",
                 "password" to "user"
-            ), cookies = res.cookies.toMutableList(), allowRedirects = false
+            ), allowRedirects = false
         )
-        dispatch(formRequest).apply {
-            request.cookies += cookies
-        }
+        dispatch(formRequest)
     }
 }
 
