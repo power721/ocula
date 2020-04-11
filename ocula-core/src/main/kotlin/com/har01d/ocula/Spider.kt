@@ -119,7 +119,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         config.authHandler = TokenAuthHandler(token, header)
     }
 
-    fun formAuth(actionUrl: String, body: FormRequestBody, block: AuthConfigure = sessionHandler) {
+    fun formAuth(actionUrl: String, body: FormRequestBody, block: AuthConfigure = { _, _ -> }) {
         config.authHandler = FormAuthHandler(actionUrl, body, block)
     }
 

@@ -35,6 +35,10 @@ fun Long.toDuration(): String {
     return String.format("%02d:%02d:%02d.%03d", h, m, s, ms)
 }
 
+fun String.host(): String {
+    return URL(this).host
+}
+
 fun String.path(): String {
     val index = indexOfAny(charArrayOf('?', '#'))
     if (index > 0) {

@@ -6,6 +6,7 @@ import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.result.Result
 import com.har01d.ocula.SpiderThreadFactory
 import com.har01d.ocula.util.generateId
+import com.har01d.ocula.util.host
 import org.apache.http.Header
 import org.apache.http.HttpEntity
 import org.apache.http.HttpHost
@@ -245,8 +246,7 @@ class ApacheHttpClient : AbstractHttpClient() {
         if (request.cookies.isNotEmpty()) {
             request.cookies.forEach {
                 val cookie = BasicClientCookie(it.name, it.value)
-                cookie.domain = it.domain
-                cookie.path = it.path
+                cookie.domain = request.url.host()
                 cookieStore.addCookie(cookie)
             }
         }

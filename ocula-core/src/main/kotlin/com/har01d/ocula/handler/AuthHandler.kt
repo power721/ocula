@@ -31,17 +31,10 @@ class TokenAuthHandler(private val token: String, private val header: String = "
     }
 }
 
-val sessionHandler = fun(request: Request, response: Response) {
-    response.cookies.find { it.name == "session" }
-            ?.let {
-                request.cookies += it
-            }
-}
-
 class FormAuthHandler(
     private val actionUrl: String,
     private val body: FormRequestBody,
-    val block: AuthConfigure = sessionHandler
+    val block: AuthConfigure = { _, _ -> }
 ) : AuthHandler() {
     override fun handle(request: Request) {
         val formRequest = Request(actionUrl, HttpMethod.POST, body)
