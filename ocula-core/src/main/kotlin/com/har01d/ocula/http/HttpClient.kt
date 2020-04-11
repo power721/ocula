@@ -247,6 +247,7 @@ class ApacheHttpClient : AbstractHttpClient() {
             request.cookies.forEach {
                 val cookie = BasicClientCookie(it.name, it.value)
                 cookie.domain = request.url.host()
+                cookie.path = "/"
                 cookieStore.addCookie(cookie)
             }
         }
