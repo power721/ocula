@@ -2,7 +2,6 @@ package com.har01d.ocula.handler
 
 import com.har01d.ocula.Context
 import com.har01d.ocula.http.Request
-import com.har01d.ocula.listener.AbstractListener
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -31,16 +30,18 @@ abstract class AbstractPostHandler : PostHandler {
  */
 interface DedupHandler {
     fun shouldVisit(request: Request): Boolean
+    fun reset()
 }
 
 object DefaultDedupHandler : DedupHandler {
     override fun shouldVisit(request: Request) = true
+    override fun reset() {}
 }
 
-class HashSetDedupHandler : DedupHandler, AbstractListener() {
+class HashSetDedupHandler : DedupHandler {
     val set: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
     override fun shouldVisit(request: Request) = set.add(request.url)
-    override fun onShutdown() = set.clear()
+    override fun reset() = set.clear()
 }
 
 interface RobotsHandler {

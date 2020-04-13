@@ -20,7 +20,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.concurrent.thread
 
 
 typealias Configure<T> = Spider<T>.() -> Unit
@@ -28,7 +27,7 @@ typealias Configure<T> = Spider<T>.() -> Unit
 open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Configure<T> = {}) : Context {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
-        val id = AtomicInteger()
+        private val executor: ExecutorService = Executors.newFixedThreadPool(2, SpiderThreadFactory("Spider"))
     }
 
     override lateinit var name: String
@@ -38,10 +37,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener>()
     var statisticListener: StatisticListener = DefaultStatisticListener()
-    var httpClient: HttpClient = ApacheHttpClient()
+    var httpClient: HttpClient = FuelHttpClient()
     private val requests = mutableListOf<Request>()
 
-    private var thread: Thread? = null
+    var future: Future<*>? = null
     var status: Status = Status.IDLE
         private set
     private var finished = false
@@ -208,6 +207,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      */
     override fun dispatch(request: Request) = httpClient.dispatch(request)
 
+    override fun reset() {
+        crawler?.dedupHandler?.reset()
+    }
+
     /**
      * Indicate no more new tasks, wait tasks in queue finish.
      */
@@ -229,7 +232,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      */
     override fun stop() {
         stoped = true
-        thread?.interrupt()
+        future?.cancel(true)
         if (status == Status.STARTED || status == Status.RUNNING) {
             status = Status.CANCELLED
         }
@@ -238,9 +241,11 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     /**
      * Start the Spider in new thread.
      */
-    fun start() {
-        this.thread = thread(name = "Spider-" + id.incrementAndGet()) {
-            run()
+    open fun start() {
+        if (status != Status.STARTED && status != Status.RUNNING) {
+            future = executor.submit {
+                run()
+            }
         }
     }
 

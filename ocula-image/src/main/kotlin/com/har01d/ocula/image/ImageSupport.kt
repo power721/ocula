@@ -14,7 +14,7 @@ import java.io.File
 fun <T> Spider<T>.downloadImages(directory: String) {
     val handler = ImageResultHandler(directory)
     resultHandlers += handler
-    start()
+    run()
     logger.info("downloaded ${handler.count} images")
 }
 

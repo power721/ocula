@@ -14,4 +14,5 @@ interface Context {
     fun stop()
     fun abort(stop: Boolean = false)
     fun finish()
+    fun reset()
 }

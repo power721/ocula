@@ -27,4 +27,8 @@ class RedisDedupHandler(name: String, connection: String = "redis://127.0.0.1:63
     override fun shouldVisit(request: Request): Boolean {
         return set.add(request.url)
     }
+
+    override fun reset() {
+        set.clear()
+    }
 }

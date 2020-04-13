@@ -1,16 +1,24 @@
 package com.har01d.ocula.selenium
 
 import com.har01d.ocula.Spider
+import com.har01d.ocula.SpiderThreadFactory
+import com.har01d.ocula.Status
 import com.har01d.ocula.crawler.Crawler
 import com.har01d.ocula.http.Request
 import com.har01d.ocula.http.Response
 import com.har01d.ocula.parser.Parser
 import com.har01d.ocula.parser.SimpleParser
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 typealias Configure<T> = SeleniumSpider<T>.() -> Unit
 
 open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, configure: Configure<T> = {}) :
     Spider<T>(crawler, parser) {
+    companion object {
+        private val executor: ExecutorService = Executors.newSingleThreadExecutor(SpiderThreadFactory("SeleniumSpider"))
+    }
+
     override val config = SeleniumConfig()
     var webDriverProvider: WebDriverProvider? = null
     var actionHandler: SeleniumActionHandler? = null
@@ -37,6 +45,14 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
 
     init {
         this.configure()
+    }
+
+    override fun start() {
+        if (status != Status.STARTED && status != Status.RUNNING) {
+            future = executor.submit {
+                run()
+            }
+        }
     }
 
     override fun initHttpClient() {
