@@ -84,6 +84,7 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
 
     private fun log(finished: Boolean = false) {
         val time = (System.currentTimeMillis() - startTime).toDuration()
+        val status = spider.status
         val size1 = spider.crawler?.queue?.size()
         val size2 = spider.parser.queue!!.size()
         val queue = if (!finished) {
@@ -98,7 +99,7 @@ class RedisStatisticListener(name: String, connection: String = "redis://127.0.0
         val parsed = map.getOrDefault("parsed", 0)
         val errors = map.getOrDefault("errors", 0)
         logger.info(
-            "$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
+            "$name($status): Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
                     "Skipped pages: $skipped $queue Errors: $errors  Time: $time"
         )
     }

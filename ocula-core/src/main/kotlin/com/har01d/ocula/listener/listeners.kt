@@ -104,6 +104,7 @@ class DefaultStatisticListener : StatisticListener() {
 
     private fun log(finished: Boolean = false) {
         val time = (System.currentTimeMillis() - startTime).toDuration()
+        val status = spider.status
         val size1 = spider.crawler?.queue?.size()
         val size2 = spider.parser.queue!!.size()
         val queue = if (!finished) {
@@ -113,7 +114,7 @@ class DefaultStatisticListener : StatisticListener() {
         }
         val name = spider.name
         logger.info(
-            "$name: Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
+            "$name($status): Downloaded pages: $downloaded  Crawled pages: $crawled  Parsed pages: $parsed  " +
                     "Skipped pages: $skipped $queue Errors: $errors  Time: $time"
         )
     }
