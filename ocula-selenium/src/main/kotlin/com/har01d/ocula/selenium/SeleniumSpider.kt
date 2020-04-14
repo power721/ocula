@@ -47,12 +47,14 @@ open class SeleniumSpider<T>(crawler: Crawler? = null, parser: Parser<T>, config
         this.configure()
     }
 
-    override fun start() {
+    override fun start(): Boolean {
         if (status != Status.STARTED && status != Status.RUNNING) {
             future = executor.submit {
                 run()
             }
+            return true
         }
+        return false
     }
 
     override fun initHttpClient() {

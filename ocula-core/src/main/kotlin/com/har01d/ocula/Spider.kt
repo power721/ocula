@@ -36,7 +36,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     val postHandlers = mutableListOf<PostHandler>()
     val resultHandlers = mutableListOf<ResultHandler<T>>()
     val listeners = mutableListOf<Listener>()
-    var statisticListener: StatisticListener = DefaultStatisticListener()
+    var statisticListener: StatisticListener? = null
     var httpClient: HttpClient = FuelHttpClient()
     private val requests = mutableListOf<Request>()
 
@@ -44,6 +44,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     var status: Status = Status.IDLE
         private set
     private var finished = false
+    private var cancelled = false
     private var aborted = false
     private var stoped = false
     private val count = AtomicInteger()
@@ -230,23 +231,27 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     /**
      * Stop the Spider, ignore the tasks in queue.
      */
-    override fun stop() {
+    override fun stop(): Boolean {
         stoped = true
         future?.cancel(true)
         if (status == Status.STARTED || status == Status.RUNNING) {
-            status = Status.CANCELLED
+            cancelled = true
+            return true
         }
+        return false
     }
 
     /**
      * Start the Spider in new thread.
      */
-    open fun start() {
+    open fun start(): Boolean {
         if (status != Status.STARTED && status != Status.RUNNING) {
             future = executor.submit {
                 run()
             }
+            return true
         }
+        return false
     }
 
     fun run() {
@@ -295,6 +300,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         futures.forEach {
             try {
                 it.get()
+            } catch (e: InterruptedException) {
+                stoped = true
             } catch (e: Exception) {
                 abort(true)
                 logger.warn("execute failed", e)
@@ -328,16 +335,17 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         configAuth()
         configHttp()
         initHttpClient()
-        if (resultHandlers.isEmpty()) resultHandlers += ConsoleLogResultHandler
-        listeners += statisticListener.also { it.spider = this@Spider }
+        initStatisticListener()
         listeners.sortBy { it.order }
+        if (resultHandlers.isEmpty()) resultHandlers += ConsoleLogResultHandler
         activeTime.set(System.currentTimeMillis())
     }
 
     private fun resetStatus() {
-        finished = false
-        aborted = false
         stoped = false
+        aborted = false
+        finished = false
+        cancelled = false
         status = Status.STARTED
     }
 
@@ -361,8 +369,8 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         crawler?.let {
             it.queue = it.queue ?: InMemoryRequestQueue()
             it.dedupHandler = it.dedupHandler ?: HashSetDedupHandler()
-            if (it.queue is Listener) listeners += it.queue as Listener
-            if (it.dedupHandler is Listener) listeners += it.dedupHandler as Listener
+            if (it.queue is Listener) addListener(it.queue as Listener)
+            if (it.dedupHandler is Listener) addListener(it.dedupHandler as Listener)
         }
     }
 
@@ -370,22 +378,28 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         with(parser) {
             queue = queue ?: InMemoryRequestQueue()
             dedupHandler = dedupHandler ?: HashSetDedupHandler()
-            if (queue is Listener) listeners += queue as Listener
-            if (dedupHandler is Listener) listeners += dedupHandler as Listener
+            if (queue is Listener) addListener(queue as Listener)
+            if (dedupHandler is Listener) addListener(dedupHandler as Listener)
         }
     }
 
     private fun configRobots() {
         with(config.http.robotsHandler) {
-            if (this is Listener) listeners += this as Listener
+            if (this is Listener) addListener(this as Listener)
             init(requests)
+        }
+    }
+
+    private fun addListener(listener: Listener) {
+        if (!listeners.contains(listener)) {
+            listeners += listener
         }
     }
 
     private fun configAuth() {
         config.authHandler?.let {
             preHandlers += config.authHandler!!
-            if (config.authHandler is Listener) listeners += config.authHandler as Listener
+            if (config.authHandler is Listener) addListener(config.authHandler as Listener)
         }
     }
 
@@ -416,6 +430,13 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         client.timeoutRead = config.http.timeoutRead
     }
 
+    private fun initStatisticListener() {
+        if (statisticListener == null) {
+            statisticListener = DefaultStatisticListener().also { it.spider = this@Spider }
+            addListener(statisticListener!!)
+        }
+    }
+
     open fun preHandle() {
         requests.forEach { request ->
             preHandlers.forEach {
@@ -442,15 +463,16 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 }
             }
         }
+        future = null
         crawler?.httpClient?.close()
         parser.httpClient?.close()
         if (status == Status.RUNNING) {
-            status = if (aborted) Status.ABORTED else Status.COMPLETED
+            status = if (cancelled) Status.CANCELLED else if (aborted) Status.ABORTED else Status.COMPLETED
         }
         when (status) {
+            Status.ABORTED -> listeners.forEach { it.onAbort() }
             Status.CANCELLED -> listeners.forEach { it.onCancel() }
-            Status.ABORTED -> listeners.forEach { it.onCancel() }
-            else -> listeners.forEach { it.onComplete() }
+            Status.COMPLETED -> listeners.forEach { it.onComplete() }
         }
     }
 
