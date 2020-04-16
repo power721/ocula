@@ -11,12 +11,15 @@ fun <T> Spider<T>.enableRedis(
     keyPrefix: String,
     connection: String = "redis://127.0.0.1:6379",
     includeCrawler: Boolean = false,
-    shutdownRedisson: Boolean = true
+    shutdownRedisson: Boolean = true,
+    configure: (RedissonClient) -> Unit = {}
 ): RedissonClient {
     val config = Config()
     config.codec = JsonJacksonCodec()
     config.useSingleServer().address = connection
     val redisson = Redisson.create(config)
+
+    configure(redisson)
 
     enableRedis(keyPrefix, redisson, includeCrawler, shutdownRedisson)
     return redisson
