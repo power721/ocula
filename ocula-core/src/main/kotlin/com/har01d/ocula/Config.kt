@@ -35,6 +35,24 @@ open class Config {
     var completeOnIdleTime = 300
     var authHandler: AuthHandler? = null
 
+    fun http(block: HttpConfig.() -> Unit) {
+        with(http) {
+            block()
+        }
+    }
+
+    fun crawler(block: CrawlerConfig.() -> Unit) {
+        with(crawler) {
+            block()
+        }
+    }
+
+    fun parser(block: ParserConfig.() -> Unit) {
+        with(parser) {
+            block()
+        }
+    }
+
     class HttpConfig {
         private val defaultUserAgents = listOf(
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36",
