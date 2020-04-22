@@ -72,7 +72,8 @@ class FuelHttpClient : AbstractHttpClient() {
         when (result) {
             is Result.Failure -> throw result.getException()
             is Result.Success -> {
-                logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
+                val time = System.currentTimeMillis() - start
+                logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}  time: $time ms")
                 return Response(
                     response.url.toExternalForm(),
                     result.value,
@@ -81,7 +82,7 @@ class FuelHttpClient : AbstractHttpClient() {
                     response.headers,
                     response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
                     response.contentLength,
-                    System.currentTimeMillis() - start
+                    time
                 )
             }
         }
@@ -94,7 +95,8 @@ class FuelHttpClient : AbstractHttpClient() {
             when (result) {
                 is Result.Failure -> handler(KResult.failure(result.getException()))
                 is Result.Success -> {
-                    logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}")
+                    val time = System.currentTimeMillis() - start
+                    logger.debug("[Response][$id] status code: ${response.statusCode}  content length: ${response.contentLength}  time: $time ms")
                     val res = Response(
                         response.url.toExternalForm(),
                         result.value,
@@ -103,7 +105,7 @@ class FuelHttpClient : AbstractHttpClient() {
                         response.headers,
                         response.headers["Set-Cookie"].flatMap { HttpCookie.parse(it) },
                         response.contentLength,
-                        System.currentTimeMillis() - start
+                        time
                     )
                     handler(KResult.success(res))
                 }
@@ -116,7 +118,7 @@ class FuelHttpClient : AbstractHttpClient() {
         logger.debug("[Request][$id] ${request.method} ${request.url}")
         if (proxyProvider.hasAny()) {
             val httpProxy = proxyProvider.select()
-            FuelManager.instance.proxy = httpProxy.toProxy()
+            FuelManager.instance.proxy = httpProxy.toProxy()  /// TODO: not work
             logger.debug("[Proxy][$id] use $httpProxy")
         } else {
             FuelManager.instance.proxy = null
@@ -187,7 +189,8 @@ class ApacheHttpClient : AbstractHttpClient() {
         val context = HttpClientContext.create()
         client.execute(httpRequest, context).use { response ->
             val contentLength = response.entity.contentLength
-            logger.debug("[Response][$id] status code: ${response.statusLine.statusCode}  content length: $contentLength")
+            val time = System.currentTimeMillis() - start
+            logger.debug("[Response][$id] status code: ${response.statusLine.statusCode}  content length: $contentLength  time: $time ms")
             val headers = convertHeaders(response.allHeaders)
             val url = context.getAttribute("uri") as String? ?: request.url
             return Response(
@@ -214,7 +217,8 @@ class ApacheHttpClient : AbstractHttpClient() {
 
             override fun completed(response: HttpResponse) {
                 val contentLength = response.entity.contentLength
-                logger.debug("[Response][$id] status code: ${response.statusLine.statusCode}  content length: $contentLength")
+                val time = System.currentTimeMillis() - start
+                logger.debug("[Response][$id] status code: ${response.statusLine.statusCode}  content length: $contentLength  time: $time ms")
                 val headers = convertHeaders(response.allHeaders)
                 val url = context.getAttribute("uri") as String? ?: request.url
                 val res = Response(

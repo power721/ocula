@@ -432,9 +432,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
     private fun initStatisticListener() {
         if (statisticListener == null) {
-            statisticListener = DefaultStatisticListener().also { it.spider = this@Spider }
-            addListener(statisticListener!!)
+            statisticListener = DefaultStatisticListener()
         }
+        statisticListener?.spider = this@Spider
+        addListener(statisticListener!!)
     }
 
     open fun preHandle() {
