@@ -1,6 +1,7 @@
 package com.har01d.ocula.examples.simple
 
 import com.har01d.ocula.SimpleSpider
+import com.har01d.ocula.spider
 import com.har01d.ocula.util.normalizeUrl
 
 fun main() {
@@ -8,7 +9,9 @@ fun main() {
         normalizeUrl(res.url, res.select("#bgLink", "href"))
     }.run()
 
-    SimpleSpider("http://quotes.toscrape.com/random") { _, res ->
-        res.xpath("//div[@class=quote]/span[@class=text]/text()", String::class.java)
-    }.run()
+    quotes()
+}
+
+fun quotes() = spider("http://quotes.toscrape.com/random") { _, res ->
+    res.xpath("//div[@class=quote]/span[@class=text]/text()", String::class.java)
 }

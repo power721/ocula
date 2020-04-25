@@ -1,6 +1,5 @@
 package com.har01d.ocula.examples
 
-import com.har01d.ocula.Spider
 import com.har01d.ocula.handler.AuthHandler
 import com.har01d.ocula.handler.ConsoleLogResultHandler
 import com.har01d.ocula.handler.HtmlResultHandler
@@ -11,17 +10,15 @@ import com.har01d.ocula.http.Response
 import com.har01d.ocula.http.post
 import com.har01d.ocula.listener.LogListener
 import com.har01d.ocula.parser.AbstractParser
+import com.har01d.ocula.spider
 
 
-fun main() {
-    val spider = Spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/") {
-        config.authHandler = CsrfFormAuthHandler()
-        listeners += LogListener
-        resultHandlers += ConsoleLogResultHandler
-        resultHandlers += TextFileResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/text")
-        resultHandlers += HtmlResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/html")
-    }
-    spider.run()
+fun main() = spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/") {
+    config.authHandler = CsrfFormAuthHandler()
+    listeners += LogListener
+    resultHandlers += ConsoleLogResultHandler
+    resultHandlers += TextFileResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/text")
+    resultHandlers += HtmlResultHandler(System.getProperty("java.io.tmpdir") + "/quotes/html")
 }
 
 class QuotesParser : AbstractParser<List<Quote>>() {

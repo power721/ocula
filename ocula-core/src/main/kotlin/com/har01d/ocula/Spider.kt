@@ -620,3 +620,15 @@ enum class Status {
         return name.toLowerCase().capitalize()
     }
 }
+
+fun <T> spider(crawler: Crawler, parser: Parser<T>, vararg url: String, configure: Configure<T> = {}) {
+    Spider(crawler = crawler, parser = parser, url = *url, configure = configure).run()
+}
+
+fun <T> spider(parser: Parser<T>, vararg url: String, configure: Configure<T> = {}) {
+    Spider(parser = parser, url = *url, configure = configure).run()
+}
+
+fun <T> spider(vararg url: String, parse: (request: Request, response: Response) -> T) {
+    SimpleSpider(url = *url, parse = parse).run()
+}
