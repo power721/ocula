@@ -54,6 +54,12 @@ fun String.md5(): String {
 
 fun String.truncate(len: Int) = substring(0, min(len, this.length))
 
+fun String?.number(): Int? {
+    if (this == null) return null
+    if (this.isEmpty()) return null
+    return "\\d+".toRegex().find(this)?.value?.toInt()
+}
+
 fun ByteArray.toHex(): String {
     return joinToString("") { "%02x".format(it) }
 }

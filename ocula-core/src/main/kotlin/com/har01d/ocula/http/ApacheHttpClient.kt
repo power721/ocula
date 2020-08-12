@@ -148,7 +148,7 @@ class ApacheHttpClient : AbstractHttpClient() {
                 cookieStore.addCookie(cookie)
             }
         }
-        if (userAgentProvider.hasAny()) {
+        if (!httpRequest.containsHeader("User-Agent") && userAgentProvider.hasAny()) {
             httpRequest.setHeader("User-Agent", userAgentProvider.select())
         }
         val requestConfig = RequestConfig.custom()

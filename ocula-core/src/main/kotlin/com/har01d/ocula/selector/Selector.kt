@@ -92,6 +92,10 @@ fun Element.toLong(): Long? {
     }
 }
 
+fun Element.number(): Int {
+    return "\\d+".toRegex().find(this.text())?.value?.toInt() ?: 0
+}
+
 fun Element.texts(): String {
     val sb = StringBuilder()
     for (element in childNodes()) {
@@ -135,4 +139,8 @@ fun Elements.lines(): List<String> {
 
 fun Elements.texts(): List<String> {
     return this.map { it.text() }
+}
+
+fun Elements.number(): Int {
+    return "\\d+".toRegex().find(this.text())?.value?.toInt() ?: 0
 }
