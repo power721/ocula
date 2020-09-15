@@ -1,8 +1,8 @@
-package com.har01d.ocula
+package cn.har01d.ocula
 
+import cn.har01d.ocula.http.BytesRequestBody
+import cn.har01d.ocula.http.RequestBody
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.har01d.ocula.http.BytesRequestBody
-import com.har01d.ocula.http.RequestBody
 import org.junit.Test
 import java.io.File
 import kotlin.test.assertEquals

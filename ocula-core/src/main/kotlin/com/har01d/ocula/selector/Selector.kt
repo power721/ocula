@@ -1,4 +1,4 @@
-package com.har01d.ocula.selector
+package cn.har01d.ocula.selector
 
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath

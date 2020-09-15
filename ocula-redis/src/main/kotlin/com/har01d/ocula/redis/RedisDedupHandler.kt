@@ -1,7 +1,7 @@
-package com.har01d.ocula.redis
+package cn.har01d.ocula.redis
 
-import com.har01d.ocula.handler.DedupHandler
-import com.har01d.ocula.http.Request
+import cn.har01d.ocula.handler.DedupHandler
+import cn.har01d.ocula.http.Request
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.codec.JsonJacksonCodec

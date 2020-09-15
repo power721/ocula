@@ -1,7 +1,7 @@
-package com.har01d.ocula.selenium
+package cn.har01d.ocula.selenium
 
-import com.har01d.ocula.http.EmptyProxyProvider
-import com.har01d.ocula.http.ProxyProvider
+import cn.har01d.ocula.http.EmptyProxyProvider
+import cn.har01d.ocula.http.ProxyProvider
 import org.openqa.selenium.MutableCapabilities
 import org.openqa.selenium.Proxy
 import org.openqa.selenium.WebDriver

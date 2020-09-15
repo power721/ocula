@@ -1,8 +1,8 @@
-package com.har01d.ocula.examples.selenium
+package cn.har01d.ocula.examples.selenium
 
-import com.har01d.ocula.examples.QuotesParser
-import com.har01d.ocula.selenium.SeleniumSpider
-import com.har01d.ocula.selenium.WaitElementPresent
+import cn.har01d.ocula.examples.QuotesParser
+import cn.har01d.ocula.selenium.SeleniumSpider
+import cn.har01d.ocula.selenium.WaitElementPresent
 
 fun main() {
     // System.setProperty("webdriver.gecko.driver", "/home/harold/Downloads/firefox/geckodriver")

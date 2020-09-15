@@ -1,10 +1,10 @@
-package com.har01d.ocula.http
+package cn.har01d.ocula.http
 
+import cn.har01d.ocula.SpiderThreadFactory
+import cn.har01d.ocula.util.generateId
 import com.github.kittinunf.fuel.*
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.extensions.jsonBody
-import com.har01d.ocula.SpiderThreadFactory
-import com.har01d.ocula.util.generateId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.HttpCookie

@@ -1,11 +1,11 @@
-package com.har01d.ocula.parser
+package cn.har01d.ocula.parser
 
-import com.har01d.ocula.Context
-import com.har01d.ocula.handler.DedupHandler
-import com.har01d.ocula.http.HttpClient
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.queue.RequestQueue
+import cn.har01d.ocula.Context
+import cn.har01d.ocula.handler.DedupHandler
+import cn.har01d.ocula.http.HttpClient
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.queue.RequestQueue
 
 interface Parser<out T> {
     var context: Context

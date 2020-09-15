@@ -1,8 +1,8 @@
-package com.har01d.ocula.selenium
+package cn.har01d.ocula.selenium
 
-import com.har01d.ocula.http.AbstractHttpClient
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
+import cn.har01d.ocula.http.AbstractHttpClient
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
 import org.slf4j.Logger

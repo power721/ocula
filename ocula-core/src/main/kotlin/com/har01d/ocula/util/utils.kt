@@ -1,4 +1,4 @@
-package com.har01d.ocula.util
+package cn.har01d.ocula.util
 
 import java.net.MalformedURLException
 import java.net.URL

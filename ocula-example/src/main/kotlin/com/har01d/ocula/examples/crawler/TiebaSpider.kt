@@ -1,11 +1,11 @@
-package com.har01d.ocula.examples.crawler
+package cn.har01d.ocula.examples.crawler
 
-import com.har01d.ocula.Spider
-import com.har01d.ocula.crawler.AbstractCrawler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.selector.Selector
+import cn.har01d.ocula.Spider
+import cn.har01d.ocula.crawler.AbstractCrawler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.selector.Selector
 
 fun main() {
     val url = "http://tieba.baidu.com/f/index/forumpark?cn=&ci=0&pcn=%E5%B0%8F%E8%AF%B4&pci=161&ct=&st=new&pn=1"

@@ -1,13 +1,13 @@
-package com.har01d.ocula
+package cn.har01d.ocula
 
+import cn.har01d.ocula.handler.AuthHandler
+import cn.har01d.ocula.handler.NoopRobotsHandler
+import cn.har01d.ocula.handler.RobotsHandler
+import cn.har01d.ocula.http.HttpProxy
+import cn.har01d.ocula.http.ProxyProvider
+import cn.har01d.ocula.http.UserAgentProvider
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.har01d.ocula.handler.AuthHandler
-import com.har01d.ocula.handler.NoopRobotsHandler
-import com.har01d.ocula.handler.RobotsHandler
-import com.har01d.ocula.http.HttpProxy
-import com.har01d.ocula.http.ProxyProvider
-import com.har01d.ocula.http.UserAgentProvider
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider

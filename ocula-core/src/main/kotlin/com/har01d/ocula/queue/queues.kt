@@ -1,6 +1,6 @@
-package com.har01d.ocula.queue
+package cn.har01d.ocula.queue
 
-import com.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Request
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit

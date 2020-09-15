@@ -1,9 +1,9 @@
-package com.har01d.ocula.robots
+package cn.har01d.ocula.robots
 
+import cn.har01d.ocula.handler.RobotsHandler
+import cn.har01d.ocula.http.Request
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
-import com.har01d.ocula.handler.RobotsHandler
-import com.har01d.ocula.http.Request
 import crawlercommons.robots.SimpleRobotRules
 import crawlercommons.robots.SimpleRobotRulesParser
 import java.net.URL

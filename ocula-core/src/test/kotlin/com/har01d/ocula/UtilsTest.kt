@@ -1,9 +1,9 @@
-package com.har01d.ocula
+package cn.har01d.ocula
 
-import com.har01d.ocula.util.generateId
-import com.har01d.ocula.util.md5
-import com.har01d.ocula.util.normalizeUrl
-import com.har01d.ocula.util.toDuration
+import cn.har01d.ocula.util.generateId
+import cn.har01d.ocula.util.md5
+import cn.har01d.ocula.util.normalizeUrl
+import cn.har01d.ocula.util.toDuration
 import org.junit.Test
 import kotlin.test.assertEquals
 

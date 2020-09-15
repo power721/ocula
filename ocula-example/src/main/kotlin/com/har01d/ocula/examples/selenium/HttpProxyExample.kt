@@ -1,6 +1,6 @@
-package com.har01d.ocula.examples.selenium
+package cn.har01d.ocula.examples.selenium
 
-import com.har01d.ocula.selenium.SimpleSeleniumSpider
+import cn.har01d.ocula.selenium.SimpleSeleniumSpider
 
 fun main() {
     SimpleSeleniumSpider("https://www.google.com/ncr") { _, res ->

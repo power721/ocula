@@ -1,11 +1,11 @@
-package com.har01d.ocula.examples.image
+package cn.har01d.ocula.examples.image
 
-import com.har01d.ocula.SimpleSpider
-import com.har01d.ocula.handler.ResultHandler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.image.*
-import com.har01d.ocula.util.normalizeUrl
+import cn.har01d.ocula.SimpleSpider
+import cn.har01d.ocula.handler.ResultHandler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.image.*
+import cn.har01d.ocula.util.normalizeUrl
 
 fun main() {
     SimpleSpider("https://book.douban.com") { _, res ->

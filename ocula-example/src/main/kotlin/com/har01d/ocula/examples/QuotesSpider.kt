@@ -1,16 +1,16 @@
-package com.har01d.ocula.examples
+package cn.har01d.ocula.examples
 
-import com.har01d.ocula.handler.AuthHandler
-import com.har01d.ocula.handler.ConsoleLogResultHandler
-import com.har01d.ocula.handler.HtmlResultHandler
-import com.har01d.ocula.handler.TextFileResultHandler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.RequestBody
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.http.post
-import com.har01d.ocula.listener.LogListener
-import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.spider
+import cn.har01d.ocula.handler.AuthHandler
+import cn.har01d.ocula.handler.ConsoleLogResultHandler
+import cn.har01d.ocula.handler.HtmlResultHandler
+import cn.har01d.ocula.handler.TextFileResultHandler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.RequestBody
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.http.post
+import cn.har01d.ocula.listener.LogListener
+import cn.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.spider
 
 
 fun main() = spider(QuotesParser(), "http://quotes.toscrape.com/tag/humor/") {

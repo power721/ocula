@@ -1,7 +1,7 @@
-package com.har01d.ocula.examples.charset
+package cn.har01d.ocula.examples.charset
 
-import com.har01d.ocula.SimpleSpider
-import com.har01d.ocula.selector.toInt
+import cn.har01d.ocula.SimpleSpider
+import cn.har01d.ocula.selector.toInt
 import java.nio.charset.Charset
 
 fun main() {

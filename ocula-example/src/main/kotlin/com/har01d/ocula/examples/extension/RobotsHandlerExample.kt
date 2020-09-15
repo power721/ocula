@@ -1,10 +1,10 @@
-package com.har01d.ocula.examples.extension
+package cn.har01d.ocula.examples.extension
 
-import com.har01d.ocula.Spider
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.robots.SimpleRobotsHandler
+import cn.har01d.ocula.Spider
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.robots.SimpleRobotsHandler
 
 fun main() {
     Spider(PageParser(), "https://cn.bing.com/") {

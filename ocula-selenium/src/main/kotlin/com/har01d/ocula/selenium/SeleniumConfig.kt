@@ -1,6 +1,6 @@
-package com.har01d.ocula.selenium
+package cn.har01d.ocula.selenium
 
-import com.har01d.ocula.Config
+import cn.har01d.ocula.Config
 
 class SeleniumConfig : Config() {
     var driverType: DriverType = DriverType.CHROME

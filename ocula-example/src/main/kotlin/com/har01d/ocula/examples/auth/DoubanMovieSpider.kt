@@ -1,8 +1,8 @@
-package com.har01d.ocula.examples.auth
+package cn.har01d.ocula.examples.auth
 
-import com.har01d.ocula.SimpleSpider
-import com.har01d.ocula.handler.FormAuthHandler
-import com.har01d.ocula.http.RequestBody
+import cn.har01d.ocula.SimpleSpider
+import cn.har01d.ocula.handler.FormAuthHandler
+import cn.har01d.ocula.http.RequestBody
 
 
 fun main() {

@@ -1,10 +1,10 @@
-package com.har01d.ocula.examples.selenium
+package cn.har01d.ocula.examples.selenium
 
-import com.har01d.ocula.crawler.AbstractCrawler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.selenium.SeleniumSpider
+import cn.har01d.ocula.crawler.AbstractCrawler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.selenium.SeleniumSpider
 
 fun main() {
     SeleniumSpider(CourseCrawler(), CourseParser(), "https://www.icourse163.org/category/historiography")

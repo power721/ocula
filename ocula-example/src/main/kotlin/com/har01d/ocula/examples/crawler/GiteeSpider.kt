@@ -1,11 +1,11 @@
-package com.har01d.ocula.examples.crawler
+package cn.har01d.ocula.examples.crawler
 
-import com.har01d.ocula.Spider
-import com.har01d.ocula.crawler.AbstractCrawler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.selector.get
+import cn.har01d.ocula.Spider
+import cn.har01d.ocula.crawler.AbstractCrawler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.selector.get
 
 fun main() {
     Spider(GiteeCrawler(), GiteeParser(), "https://gitee.com/explore/spider?lang=Java").run()

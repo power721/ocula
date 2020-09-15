@@ -1,8 +1,8 @@
-package com.har01d.ocula.http
+package cn.har01d.ocula.http
 
-import com.har01d.ocula.SpiderThreadFactory
-import com.har01d.ocula.util.generateId
-import com.har01d.ocula.util.host
+import cn.har01d.ocula.SpiderThreadFactory
+import cn.har01d.ocula.util.generateId
+import cn.har01d.ocula.util.host
 import org.apache.http.Header
 import org.apache.http.HttpEntity
 import org.apache.http.HttpHost

@@ -1,11 +1,11 @@
-package com.har01d.ocula.examples.selenium
+package cn.har01d.ocula.examples.selenium
 
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
-import com.har01d.ocula.selenium.LoadAll
-import com.har01d.ocula.selenium.SeleniumSpider
-import com.har01d.ocula.util.normalizeUrl
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.selenium.LoadAll
+import cn.har01d.ocula.selenium.SeleniumSpider
+import cn.har01d.ocula.util.normalizeUrl
 
 fun main() {
     SeleniumSpider(ZhihuParser(), "https://www.zhihu.com/search?type=content&q=Java") {

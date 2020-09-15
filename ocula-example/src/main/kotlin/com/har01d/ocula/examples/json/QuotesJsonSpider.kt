@@ -1,10 +1,10 @@
-package com.har01d.ocula.examples.json
+package cn.har01d.ocula.examples.json
 
-import com.har01d.ocula.Spider
-import com.har01d.ocula.handler.JsonFileResultHandler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.parser.AbstractParser
+import cn.har01d.ocula.Spider
+import cn.har01d.ocula.handler.JsonFileResultHandler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.parser.AbstractParser
 import com.jayway.jsonpath.TypeRef
 
 fun main() {

@@ -1,6 +1,6 @@
-package com.har01d.ocula.selenium
+package cn.har01d.ocula.selenium
 
-import com.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Request
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebDriver

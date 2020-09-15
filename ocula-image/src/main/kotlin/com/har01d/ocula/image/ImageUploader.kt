@@ -1,4 +1,4 @@
-package com.har01d.ocula.image
+package cn.har01d.ocula.image
 
 import com.github.kittinunf.fuel.core.FileDataPart
 import com.github.kittinunf.fuel.httpDownload

@@ -1,8 +1,8 @@
-package com.har01d.ocula.examples.simple
+package cn.har01d.ocula.examples.simple
 
-import com.har01d.ocula.SimpleSpider
-import com.har01d.ocula.spider
-import com.har01d.ocula.util.normalizeUrl
+import cn.har01d.ocula.SimpleSpider
+import cn.har01d.ocula.spider
+import cn.har01d.ocula.util.normalizeUrl
 
 fun main() {
     SimpleSpider("https://bing.com") { _, res ->

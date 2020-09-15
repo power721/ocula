@@ -1,13 +1,13 @@
-package com.har01d.ocula.examples.redis
+package cn.har01d.ocula.examples.redis
 
-import com.har01d.ocula.Spider
-import com.har01d.ocula.crawler.AbstractCrawler
-import com.har01d.ocula.examples.crawler.QQCourseParser
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.RequestBody
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.redis.enableRedis
-import com.har01d.ocula.util.path
+import cn.har01d.ocula.Spider
+import cn.har01d.ocula.crawler.AbstractCrawler
+import cn.har01d.ocula.examples.crawler.QQCourseParser
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.RequestBody
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.redis.enableRedis
+import cn.har01d.ocula.util.path
 
 fun main() {
     Spider(QQCourseCrawler(), QQCourseParser(), "https://ke.qq.com/course/list") {

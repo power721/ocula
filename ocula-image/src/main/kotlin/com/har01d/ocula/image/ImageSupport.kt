@@ -1,12 +1,12 @@
-package com.har01d.ocula.image
+package cn.har01d.ocula.image
 
+import cn.har01d.ocula.Spider
+import cn.har01d.ocula.Spider.Companion.logger
+import cn.har01d.ocula.handler.FileResultHandler
+import cn.har01d.ocula.http.Request
+import cn.har01d.ocula.http.Response
+import cn.har01d.ocula.util.normalizeUrl
 import com.github.kittinunf.fuel.httpDownload
-import com.har01d.ocula.Spider
-import com.har01d.ocula.Spider.Companion.logger
-import com.har01d.ocula.handler.FileResultHandler
-import com.har01d.ocula.http.Request
-import com.har01d.ocula.http.Response
-import com.har01d.ocula.util.normalizeUrl
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File

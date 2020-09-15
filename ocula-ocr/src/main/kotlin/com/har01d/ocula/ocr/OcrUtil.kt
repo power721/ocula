@@ -1,4 +1,4 @@
-package com.har01d.ocula.ocr
+package cn.har01d.ocula.ocr
 
 import org.bytedeco.javacpp.Loader
 import org.bytedeco.leptonica.global.lept.pixDestroy

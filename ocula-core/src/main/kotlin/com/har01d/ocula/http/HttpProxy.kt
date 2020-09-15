@@ -1,4 +1,4 @@
-package com.har01d.ocula.http
+package cn.har01d.ocula.http
 
 import java.net.InetSocketAddress
 import java.net.Proxy
