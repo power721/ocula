@@ -3,6 +3,7 @@ package cn.har01d.ocula
 import cn.har01d.ocula.handler.AuthHandler
 import cn.har01d.ocula.handler.NoopRobotsHandler
 import cn.har01d.ocula.handler.RobotsHandler
+import cn.har01d.ocula.http.HttpMethod
 import cn.har01d.ocula.http.HttpProxy
 import cn.har01d.ocula.http.ProxyProvider
 import cn.har01d.ocula.http.UserAgentProvider
@@ -95,7 +96,7 @@ open class Config {
             "Mozilla/5.0 (Linux; U; Android 6.0; zh-CN; PE-TL20 Build/HuaweiPE-TL20) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/40.0.2214.89 Quark/2.0.3.954 Mobile Safari/537.36"
         )
 
-        private val defaultHttpHeaders = mapOf(
+        private val defaultHttpHeaders = mutableMapOf(
             "Accept" to listOf("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"),
             // "Accept-Encoding" to listOf("gzip", "deflate"),  // do not support br
             "Accept-Language" to listOf("en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,ja;q=0.6,zh-TW;q=0.5")
@@ -110,9 +111,10 @@ open class Config {
         var timeout = 15000
         var timeoutRead = 15000
 
+        var httpMethod: HttpMethod = HttpMethod.GET
         var userAgents: List<String> = defaultUserAgents
         var userAgentProvider: UserAgentProvider? = null
-        var headers: Map<String, Collection<String>> = defaultHttpHeaders
+        var headers: MutableMap<String, List<String>> = defaultHttpHeaders
         val proxies = mutableListOf<HttpProxy>()
         var proxyProvider: ProxyProvider? = null
         var robotsHandler: RobotsHandler = NoopRobotsHandler

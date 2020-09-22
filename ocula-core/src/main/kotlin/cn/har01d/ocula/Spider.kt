@@ -154,7 +154,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * Add urls to the queue, will normalize the url by refer URL, check duplication before add them.
      */
     private fun enqueue(queue: RequestQueue, dedupHandler: DedupHandler, refer: String, vararg urls: String): Boolean {
-        return enqueue(queue, dedupHandler, refer, *urls.map { Request(it) }.toTypedArray())
+        return enqueue(queue, dedupHandler, refer, *urls.map { Request(it, config.http.httpMethod) }.toTypedArray())
     }
 
     /**
