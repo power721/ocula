@@ -39,6 +39,7 @@ object EmptyProxyProvider : ProxyProvider {
     override fun hasAny() = false
 }
 
+class SimpleProxyProvider(httpProxy: HttpProxy) : ProxyProvider, RandomProvider<HttpProxy>(listOf(httpProxy))
 class RandomProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RandomProvider<HttpProxy>(httpProxies)
 class RoundRobinProxyProvider(httpProxies: List<HttpProxy>) : ProxyProvider, RoundRobinProvider<HttpProxy>(httpProxies)
 
@@ -50,5 +51,7 @@ object EmptyUserAgentProvider : UserAgentProvider {
 
     override fun hasAny() = false
 }
+
+class SimpleUserAgentProvider(userAgent: String) : UserAgentProvider, RandomProvider<String>(listOf(userAgent))
 class RandomUserAgentProvider(userAgents: List<String>) : UserAgentProvider, RandomProvider<String>(userAgents)
 class RoundRobinUserAgentProvider(userAgents: List<String>) : UserAgentProvider, RoundRobinProvider<String>(userAgents)

@@ -1,10 +1,6 @@
 package cn.har01d.ocula.handler
 
-import cn.har01d.ocula.http.FormRequestBody
-import cn.har01d.ocula.http.HttpMethod
-import cn.har01d.ocula.http.Request
-import cn.har01d.ocula.http.Response
-import java.net.HttpCookie
+import cn.har01d.ocula.http.*
 import java.util.*
 
 typealias AuthConfigure = (request: Request, response: Response) -> Unit

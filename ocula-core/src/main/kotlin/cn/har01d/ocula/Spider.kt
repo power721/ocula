@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicLong
 typealias Configure<T> = Spider<T>.() -> Unit
 
 open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Configure<T> = {}) : Context {
+    val logger: Logger = LoggerFactory.getLogger(javaClass)
     companion object {
-        val logger: Logger = LoggerFactory.getLogger(Spider::class.java)
         private val executor: ExecutorService = Executors.newFixedThreadPool(2, SpiderThreadFactory("Spider"))
     }
 
@@ -97,32 +97,39 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     fun configure(block: Config.() -> Unit) {
+        logger.debug("spider configure")
         with(config) {
             block()
         }
     }
 
     fun mobile() {
+        logger.debug("spider uses mobile agents")
         config.http.mobile()
     }
 
     fun basicAuth(username: String, password: String) {
+        logger.debug("basic auth, username: {}", username)
         config.authHandler = BasicAuthHandler(username, password)
     }
 
     fun cookieAuth(name: String, value: String) {
+        logger.debug("cookie auth, name: {}", name)
         config.authHandler = CookieAuthHandler(name, value)
     }
 
     fun tokenAuth(token: String, header: String = "Authorization") {
+        logger.debug("token auth, header: {}", header)
         config.authHandler = TokenAuthHandler(token, header)
     }
 
     fun formAuth(actionUrl: String, body: FormRequestBody, block: AuthConfigure = { _, _ -> }) {
+        logger.debug("form auth, actionUrl: {}", actionUrl)
         config.authHandler = FormAuthHandler(actionUrl, body, block)
     }
 
     fun httpProxy(hostname: String, port: Int) {
+        logger.debug("add http proxy {}:{}", hostname, port)
         config.http.proxies += HttpProxy(hostname, port)
     }
 
@@ -173,24 +180,27 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         for (request in requests) {
             val url = request.url
             if (!validateUrl(url)) {
+                logger.debug("skip invalid url {}", url)
                 continue
             }
-            val uri = normalizeUrl(refer, url)
+            val uri = normalizeUrl(refer, url)?.path()
             if (uri != null) {
                 request.headers["Referer"] = listOf(refer)
                 val req = request.copy(url = uri)
                 if (!config.http.robotsHandler.handle(req)) {
                     listeners.forEach { it.onSkip(req) }
-                    logger.debug("Skip {}", req.url)
+                    logger.trace("[RobotsHandler] Skip {}", req.url)
                     continue
                 }
                 if (!dedupHandler.shouldVisit(req)) {
-                    logger.debug("Ignore {}", req.url)
+                    logger.trace("[DedupHandler] Ignore {}", req.url)
                     continue
                 }
                 queue.push(req)
                 logger.debug("Enqueue {}", req.url)
                 success = true
+            } else {
+                logger.debug("skip malformed url {}", url)
             }
         }
         return success
@@ -209,6 +219,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     override fun dispatch(request: Request) = httpClient.dispatch(request)
 
     override fun reset() {
+        logger.debug("[DedupHandler] reset")
         crawler?.dedupHandler?.reset()
     }
 
@@ -216,6 +227,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * Indicate no more new tasks, wait tasks in queue finish.
      */
     override fun finish() {
+        logger.trace("spider finish")
         finished = true
     }
 
@@ -223,6 +235,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
      * Abort the Spider because of error, wait tasks in queue finish.
      */
     override fun abort(stop: Boolean) {
+        logger.debug("spider abort {}", stop)
         stoped = stop
         aborted = true
         finished = true
@@ -236,8 +249,10 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         future?.cancel(true)
         if (status == Status.STARTED || status == Status.RUNNING) {
             cancelled = true
+            logger.debug("stop spider {}", name)
             return true
         }
+        logger.warn("stop spider {} failed, status: {}", name, status)
         return false
     }
 
@@ -249,12 +264,15 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             future = executor.submit {
                 run()
             }
+            logger.debug("start spider {}", name)
             return true
         }
+        logger.warn("start spider {} failed, status: {}", name, status)
         return false
     }
 
     fun run() {
+        logger.debug("spider run")
         validate()
         prepare()
 
@@ -266,6 +284,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
         var crawlerExecutor: ExecutorService? = null
         if (crawler != null) {
+            logger.debug("start crawler")
             crawl(requests[0].url.path(), *requests.toTypedArray())
 
             crawler.context = this@Spider
@@ -317,6 +336,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     open fun validate() {
+        logger.debug("spider validate")
         if (status == Status.STARTED || status == Status.RUNNING) {
             throw IllegalStateException("Spider $name is " + status.name.toLowerCase().capitalize())
         }
@@ -326,6 +346,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     open fun prepare() {
+        logger.debug("spider prepare")
         resetStatus()
         initName()
         smartConcurrency()
@@ -339,9 +360,11 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         listeners.sortBy { it.order }
         if (resultHandlers.isEmpty()) resultHandlers += ConsoleLogResultHandler
         activeTime.set(System.currentTimeMillis())
+        logger.debug("spider prepare done")
     }
 
     private fun resetStatus() {
+        logger.debug("spider reset status")
         stoped = false
         aborted = false
         finished = false
@@ -352,6 +375,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     private fun initName() {
         if (!this::name.isInitialized) {
             name = URL(requests[0].url).host
+            logger.debug("init name {}", name)
         }
     }
 
@@ -362,11 +386,13 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             } else {
                 1
             }
+            logger.debug("smart concurrency: {}", config.parser.concurrency)
         }
     }
 
     private fun configCrawler() {
         crawler?.let {
+            logger.debug("config crawler")
             it.queue = it.queue ?: InMemoryRequestQueue()
             it.dedupHandler = it.dedupHandler ?: HashSetDedupHandler()
             if (it.queue is Listener) addListener(it.queue as Listener)
@@ -376,6 +402,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
     private fun configParser() {
         with(parser) {
+            logger.debug("config parser")
             queue = queue ?: InMemoryRequestQueue()
             dedupHandler = dedupHandler ?: HashSetDedupHandler()
             if (queue is Listener) addListener(queue as Listener)
@@ -385,6 +412,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
     private fun configRobots() {
         with(config.http.robotsHandler) {
+            logger.debug("config Robots")
             if (this is Listener) addListener(this as Listener)
             init(requests)
         }
@@ -392,12 +420,16 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
     private fun addListener(listener: Listener) {
         if (!listeners.contains(listener)) {
+            logger.debug("add listener {}", listener)
             listeners += listener
+        } else {
+            logger.debug("listener {} exists", listener)
         }
     }
 
     private fun configAuth() {
         config.authHandler?.let {
+            logger.debug("config auth")
             preHandlers += config.authHandler!!
             if (config.authHandler is Listener) addListener(config.authHandler as Listener)
         }
@@ -405,12 +437,14 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
 
     private fun configHttp() {
         with(config.http) {
+            logger.debug("config HTTP")
             userAgentProvider = userAgentProvider ?: RoundRobinUserAgentProvider(userAgents)
             proxyProvider = proxyProvider ?: RoundRobinProxyProvider(proxies)
         }
     }
 
     open fun initHttpClient() {
+        logger.debug("init HTTP client")
         crawler?.let {
             it.httpClient = it.httpClient ?: httpClient
             configHttpClient(it.httpClient!!)
@@ -421,6 +455,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     private fun configHttpClient(client: HttpClient) {
+        logger.debug("config HTTP client")
         if (client.userAgentProvider is EmptyUserAgentProvider)
             client.userAgentProvider = config.http.userAgentProvider!!
         if (client.proxyProvider is EmptyProxyProvider)
@@ -431,6 +466,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     private fun initStatisticListener() {
+        logger.debug("init statistic listener")
         if (statisticListener == null) {
             statisticListener = DefaultStatisticListener()
         }
@@ -439,6 +475,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     open fun preHandle() {
+        logger.debug("spider pre handle")
         requests.forEach { request ->
             preHandlers.forEach {
                 it.context = this@Spider
@@ -450,9 +487,11 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 }
             }
         }
+        logger.debug("spider pre handle done")
     }
 
     open fun postHandle() {
+        logger.debug("spider post handle")
         requests.forEach { request ->
             postHandlers.forEach {
                 it.context = this@Spider
@@ -475,14 +514,17 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
             Status.CANCELLED -> listeners.forEach { it.onCancel() }
             Status.COMPLETED -> listeners.forEach { it.onComplete() }
         }
+        logger.debug("spider post handle done")
     }
 
     open fun setHeaders(request: Request, referer: String?) {
         if (referer != null && !request.headers.containsKey("Referer")) {
+            logger.trace("set HTTP header Referer={}", referer)
             request.headers["Referer"] = listOf(referer)
         }
         for (entry in config.http.headers) {
             if (!request.headers.containsKey(entry.key)) {
+                logger.trace("set HTTP header {}={}", entry.key, entry.value)
                 request.headers[entry.key] = entry.value
             }
         }
@@ -494,6 +536,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         while (true) {
             val request = crawler!!.queue!!.poll(1000L)
             if (request != null) {
+                logger.trace("crawler handle request {}", request)
                 try {
                     activeTime.set(System.currentTimeMillis())
                     count.incrementAndGet()
@@ -542,6 +585,7 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
         while (true) {
             val request = parser.queue!!.poll(1000L)
             if (request != null) {
+                logger.trace("parser handle request {}", request)
                 try {
                     activeTime.set(System.currentTimeMillis())
                     count.incrementAndGet()

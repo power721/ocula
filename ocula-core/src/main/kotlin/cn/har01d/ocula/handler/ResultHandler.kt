@@ -16,6 +16,10 @@ interface ResultHandler<in T> {
     fun handle(request: Request, response: Response, result: T)
 }
 
+object NoopResultHandler : ResultHandler<Any?> {
+    override fun handle(request: Request, response: Response, result: Any?) {}
+}
+
 object ConsoleLogResultHandler : ResultHandler<Any?> {
     override fun handle(request: Request, response: Response, result: Any?) {
         println(request.url)

@@ -39,8 +39,8 @@ object DefaultDedupHandler : DedupHandler {
 }
 
 class HashSetDedupHandler : DedupHandler {
-    val set: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
-    override fun shouldVisit(request: Request) = set.add(request.url)
+    val set: MutableSet<Request> = Collections.newSetFromMap(ConcurrentHashMap())
+    override fun shouldVisit(request: Request) = set.add(request)
     override fun reset() = set.clear()
 }
 

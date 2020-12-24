@@ -3,10 +3,7 @@ package cn.har01d.ocula.http
 import cn.har01d.ocula.SpiderThreadFactory
 import cn.har01d.ocula.util.generateId
 import cn.har01d.ocula.util.host
-import org.apache.http.Header
-import org.apache.http.HttpEntity
-import org.apache.http.HttpHost
-import org.apache.http.HttpResponse
+import org.apache.http.*
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.*
@@ -148,8 +145,8 @@ class ApacheHttpClient : AbstractHttpClient() {
                 cookieStore.addCookie(cookie)
             }
         }
-        if (!httpRequest.containsHeader("User-Agent") && userAgentProvider.hasAny()) {
-            httpRequest.setHeader("User-Agent", userAgentProvider.select())
+        if (!httpRequest.containsHeader(HttpHeaders.USER_AGENT) && userAgentProvider.hasAny()) {
+            httpRequest.setHeader(HttpHeaders.USER_AGENT, userAgentProvider.select())
         }
         val requestConfig = RequestConfig.custom()
             .setConnectTimeout(timeout)

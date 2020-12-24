@@ -1,7 +1,6 @@
 package cn.har01d.ocula.image
 
 import cn.har01d.ocula.Spider
-import cn.har01d.ocula.Spider.Companion.logger
 import cn.har01d.ocula.handler.FileResultHandler
 import cn.har01d.ocula.http.Request
 import cn.har01d.ocula.http.Response

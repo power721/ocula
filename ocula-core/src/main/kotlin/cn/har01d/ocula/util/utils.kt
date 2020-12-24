@@ -19,9 +19,13 @@ fun generateId(length: Int): String {
 
 fun normalizeUrl(refer: String, url: String) =
     try {
-        val base = URL(refer)
-        val uri = if (url.startsWith("?")) base.path + url else url
-        URL(base, uri).toExternalForm()
+        if (refer.isEmpty()) {
+            URL(url).toExternalForm()
+        } else {
+            val base = URL(refer)
+            val uri = if (url.startsWith("?")) base.path + url else url
+            URL(base, uri).toExternalForm()
+        }
     } catch (e: MalformedURLException) {
         null
     }
@@ -58,6 +62,12 @@ fun String?.number(): Int? {
     if (this == null) return null
     if (this.isEmpty()) return null
     return "\\d+".toRegex().find(this)?.value?.toInt()
+}
+
+fun String?.double(): Double? {
+    if (this == null) return null
+    if (this.isEmpty()) return null
+    return "\\d+(\\.\\d+)?".toRegex().find(this)?.value?.toDouble()
 }
 
 fun ByteArray.toHex(): String {
