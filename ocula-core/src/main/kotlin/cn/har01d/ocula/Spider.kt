@@ -183,15 +183,16 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
                 logger.debug("skip invalid url {}", url)
                 continue
             }
-            val uri = normalizeUrl(refer, url)?.path()
+            val uri = normalizeUrl(refer, url)
             if (uri != null) {
-                request.headers["Referer"] = listOf(refer)
+                request.headers["Referer"] = listOf(refer.path())
                 val req = request.copy(url = uri)
                 if (!config.http.robotsHandler.handle(req)) {
                     listeners.forEach { it.onSkip(req) }
                     logger.trace("[RobotsHandler] Skip {}", req.url)
                     continue
                 }
+                // BUG: 如果是list页面没有采集完成被中断，重启后不能再采集list页面剩余的内容
                 if (!dedupHandler.shouldVisit(req)) {
                     logger.trace("[DedupHandler] Ignore {}", req.url)
                     continue

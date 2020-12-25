@@ -48,7 +48,7 @@ class OkHttp3Client : AbstractHttpClient() {
         }
 
         client.newCall(builder.build()).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("Unexpected code $response")
+            if (!response.isSuccessful) throw IOException("Unexpected code ${response.code}")
 
             val contentLength = response.body!!.contentLength()
             logger.debug("[Response][$id] status code: ${response.code}  content length: $contentLength")
