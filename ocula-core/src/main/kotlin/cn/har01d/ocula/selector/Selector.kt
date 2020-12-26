@@ -19,6 +19,8 @@ open class Selector(private val body: String) {
         JsonPath.parse(body)
     }
 
+    fun href(cssQuery: String): String = select(cssQuery, "href")
+
     fun links(cssQuery: String = "a[href]"): List<String> = select(cssQuery).map { it.attr("href") }
 
     fun images(cssQuery: String = "img[src]"): List<String> = select(cssQuery).map { it.attr("src") }

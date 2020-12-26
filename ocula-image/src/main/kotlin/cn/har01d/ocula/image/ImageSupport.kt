@@ -10,19 +10,28 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 
-fun <T> Spider<T>.downloadImages(directory: String) {
-    val handler = ImageResultHandler(directory)
+fun <T> Spider<T>.downloadImages(directory: String, fileProvider: FileProvider = DefaultFileProvider) {
+    val handler = ImageResultHandler(directory, fileProvider)
     resultHandlers += handler
     run()
     logger.info("downloaded ${handler.count} images")
 }
 
-class ImageResultHandler(directory: String) : FileResultHandler<Any?>(directory) {
+interface FileProvider {
+    fun getFile(directory: String, fileName: String): File
+}
+
+object DefaultFileProvider : FileProvider {
+    override fun getFile(directory: String, fileName: String) = File(directory, fileName)
+}
+
+open class ImageResultHandler(directory: String, private val fileProvider: FileProvider = DefaultFileProvider) :
+    FileResultHandler<Any?>(directory) {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(ImageResultHandler::class.java)
     }
 
-    private val regex = ".*/(.*\\.(?:jpg|jpeg|png|webp|tiff|gif)).*".toRegex()
+    open val regex = ".*/(.*\\.(?:jpg|jpeg|png|webp|tiff|gif)).*".toRegex()
     var count = 0
 
     override fun handle(request: Request, response: Response, result: Any?) {
@@ -45,12 +54,12 @@ class ImageResultHandler(directory: String) : FileResultHandler<Any?>(directory)
         }
     }
 
-    private fun download(url: String?): Boolean {
+    open fun download(url: String?): Boolean {
         if (url == null) return false
         val name = regex.find(url)?.let {
             it.groupValues[1]
         } ?: return false
-        val file = File(directory, name)
+        val file = fileProvider.getFile(directory, name)
         if (file.exists()) {
             logger.info("file $file exists")
             return false

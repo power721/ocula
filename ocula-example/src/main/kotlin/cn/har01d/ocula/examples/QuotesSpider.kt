@@ -31,7 +31,7 @@ class QuotesParser : AbstractParser<List<Quote>>() {
         }
 
         println(response.select("a[href=/logout]").text())
-        val next = response.select("li.next a", "href")
+        val next = response.href("li.next a")
         if (!context.follow(response.url, next)) {
             context.finish()
         }
