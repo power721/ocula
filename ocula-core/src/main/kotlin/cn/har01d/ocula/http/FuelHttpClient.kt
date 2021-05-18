@@ -113,7 +113,10 @@ class FuelHttpClient : AbstractHttpClient() {
                 is JsonRequestBody -> req.jsonBody(it.json)
                 is BytesRequestBody -> req.body(it.bytes)
                 is FileRequestBody -> req.body(it.file)
-                is FormRequestBody -> req.parameters = it.form.toList()
+                is FormRequestBody -> {
+                    req.header("Content-Type", "application/x-www-form-urlencoded")
+                    req.parameters = it.form.toList()
+                }
             }
         }
         return Pair(id, req)

@@ -26,6 +26,7 @@ typealias Configure<T> = Spider<T>.() -> Unit
 
 open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, configure: Configure<T> = {}) : Context {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
+
     companion object {
         private val executor: ExecutorService = Executors.newFixedThreadPool(2, SpiderThreadFactory("Spider"))
     }
@@ -215,9 +216,11 @@ open class Spider<T>(val crawler: Crawler? = null, val parser: Parser<T>, config
     }
 
     /**
-     * Dispatch HTTP request by FuelHttpClient.
+     * Dispatch HTTP request by HttpClient.
      */
     override fun dispatch(request: Request) = httpClient.dispatch(request)
+
+    override fun dispatch(url: String) = httpClient.dispatch(Request(url))
 
     override fun reset() {
         logger.debug("[DedupHandler] reset")

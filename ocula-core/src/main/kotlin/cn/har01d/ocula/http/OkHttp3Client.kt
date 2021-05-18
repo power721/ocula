@@ -24,7 +24,7 @@ class OkHttp3Client : AbstractHttpClient() {
     private val client by lazy {
         OkHttpClient.Builder()
             .connectTimeout(Duration.ofMillis(timeout.toLong()))
-            .connectTimeout(Duration.ofMillis(timeoutRead.toLong()))
+            .readTimeout(Duration.ofMillis(timeoutRead.toLong()))
             .followRedirects(true)
             .build()
     }
