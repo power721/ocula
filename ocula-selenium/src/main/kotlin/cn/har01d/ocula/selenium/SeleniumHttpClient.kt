@@ -5,6 +5,7 @@ import cn.har01d.ocula.http.Request
 import cn.har01d.ocula.http.Response
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
+import org.openqa.selenium.WebDriver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -14,6 +15,7 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
     }
 
     var actionHandler: SeleniumActionHandler? = null
+    var webDriver: WebDriver? = null
 
     override fun close() {
         webDriverProvider.clean()
@@ -22,18 +24,18 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
     override fun dispatch(request: Request): Response {
         val start = System.currentTimeMillis()
         logger.debug("[Request] handle ${request.url}")
-        val webDriver = webDriverProvider.take()
+        webDriver = webDriverProvider.take()
         try {
-            val options = webDriver.manage()
+            val options = webDriver!!.manage()
             for (entry in request.cookies) {
                 val cookie = Cookie(entry.name, entry.value)
                 options.addCookie(cookie)
             }
-            webDriver[request.url]
+            webDriver!![request.url]
 
-            actionHandler?.handle(request, webDriver)
+            actionHandler?.handle(request, webDriver!!)
 
-            val webElement = webDriver.findElement(By.xpath("/html"))
+            val webElement = webDriver!!.findElement(By.xpath("/html"))
             val content = webElement.getAttribute("outerHTML")
             options.deleteAllCookies()
             return Response(
@@ -44,25 +46,25 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
                     time = System.currentTimeMillis() - start
             )
         } finally {
-            webDriverProvider.release(webDriver)
+            webDriverProvider.release(webDriver!!)
         }
     }
 
     override fun dispatch(request: Request, handler: (result: Result<Response>) -> Unit) {
         val start = System.currentTimeMillis()
         logger.debug("[Request] handle ${request.url}")
-        val webDriver = webDriverProvider.take()
+        webDriver = webDriverProvider.take()
         try {
-            val options = webDriver.manage()
+            val options = webDriver!!.manage()
             for (entry in request.cookies) {
                 val cookie = Cookie(entry.name, entry.value)
                 options.addCookie(cookie)
             }
-            webDriver[request.url]
+            webDriver!![request.url]
 
-            actionHandler?.handle(request, webDriver)
+            actionHandler?.handle(request, webDriver!!)
 
-            val webElement = webDriver.findElement(By.xpath("/html"))
+            val webElement = webDriver!!.findElement(By.xpath("/html"))
             val content = webElement.getAttribute("outerHTML")
             options.deleteAllCookies()
             val response = Response(
@@ -76,7 +78,7 @@ class SeleniumHttpClient(private val webDriverProvider: WebDriverProvider) : Abs
         } catch (e: Exception) {
             handler(Result.failure(e))
         } finally {
-            webDriverProvider.release(webDriver)
+            webDriverProvider.release(webDriver!!)
         }
     }
 }

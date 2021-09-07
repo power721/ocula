@@ -20,13 +20,13 @@ class SimpleRobotsHandler : RobotsHandler {
 
     private fun parseRobotsTxt(url: String): SimpleRobotRules? {
         val (_, response, result) = url.httpGet().response()
-        when (result) {
+        return when (result) {
             is Result.Success -> {
                 val contentType = response["content-type"].firstOrNull() ?: "text/plain"
-                return SimpleRobotRulesParser().parseContent(url, result.value, contentType, "")
+                SimpleRobotRulesParser().parseContent(url, result.value, contentType, "")
             }
+            else -> null
         }
-        return null
     }
 
     override fun handle(request: Request): Boolean {

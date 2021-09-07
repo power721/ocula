@@ -6,7 +6,7 @@
 
     <groupId>cn.har01d</groupId>
     <artifactId>ocula</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
     <packaging>pom</packaging>
     <name>ocula</name>
     <description>A kotlin crawler framework.</description>
